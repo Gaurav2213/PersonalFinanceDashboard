@@ -6,62 +6,75 @@ import java.util.List;
 
 import dao.TransactionDAO;
 import model.Transaction;
+import model.ValidationResult;
 
 public class TransactionService {
 
+	// Allowed types for transaction
+	private static final List<String> VALID_TYPES = Arrays.asList("income", "expense");
+
+	// Allowed categories for dropdown selection
+	private static final List<String> VALID_CATEGORIES = Arrays.asList("food", "transport", "utilities", "shopping",
+			"health", "salary", "entertainment", "other");
+
 	// reuse the common validation practice in all the methods
-	private String validateTransaction(Transaction transaction) {
+	private ValidationResult validateTransaction(Transaction transaction) {
 		// Validate amount
 		if (transaction.getAmount() <= 0) {
-			return "Amount must be greater than 0";
+			return new ValidationResult(false, "Amount must be greater than 0");
 		}
 
-		// Validate type
-		if (transaction.getType() == null || (!transaction.getType().equalsIgnoreCase("income")
-				&& !transaction.getType().equalsIgnoreCase("expense"))) {
-			return "Invalid transaction type. Must be 'income' or 'expense'";
+		// Validate and clean type
+		if (transaction.getType() == null || transaction.getType().trim().isEmpty()) {
+			return new ValidationResult(false, "Transaction type cannot be empty");
 		}
+		String type = transaction.getType().trim().toLowerCase();
+		if (!VALID_TYPES.contains(type)) {
+			return new ValidationResult(false, "Invalid transaction type. Must be 'income' or 'expense'");
+		}
+
+		transaction.setType(type); // normalized update
+
 		// Validate date
 		if (transaction.getDate() == null) {
-			return "Date cannot be null";
+			return new ValidationResult(false, "Date cannot be null");
 		}
 
 		if (transaction.getDate().after(new java.util.Date())) {
-			return "Transaction date cannot be in the future";
-		}
-		// Validate category
-		if (transaction.getCategory() == null || !VALID_CATEGORIES.contains(transaction.getCategory())) {
-			return "Invalid category selected";
+			return new ValidationResult(false, "Transaction date cannot be in the future");
 		}
 
-		return "success";
+		// Validate and clean category
+		if (transaction.getCategory() == null || transaction.getCategory().trim().isEmpty()) {
+			return new ValidationResult(false, "Category cannot be empty");
+		}
+
+		String category = transaction.getCategory().trim().toLowerCase();
+		if (!VALID_CATEGORIES.contains(category)) {
+			return new ValidationResult(false, "Invalid category selected");
+		}
+		transaction.setCategory(category); // Normalize the input
+
+		// validate the description
+		if (transaction.getDescription() != null && transaction.getDescription().length() > 255) {
+			return new ValidationResult(false, "Description cannot exceed 255 characters");
+		}
+
+		return new ValidationResult(true, "success");
 	}
 
-	
-	
-	
-	// Allowed categories for dropdown selection
-	private static final List<String> VALID_CATEGORIES = Arrays.asList("Food", "Transport", "Utilities", "Shopping",
-			"Health", "Salary", "Entertainment", "Other");
-
-	
-	
-	
 	// Add a new transaction (income or expense)
 	public String addTransaction(Transaction transaction) {
 
 		// validate the user input for registration
-		String validation = validateTransaction(transaction);
-		if (!validation.equals("success"))
-			return validation;
+		ValidationResult validation = validateTransaction(transaction);
+		if (!validation.isValid())
+			return validation.getMessage();
 
 		// Save transaction
 		boolean success = TransactionDAO.addTransaction(transaction);
 		return success ? "success" : "Failed to add transaction";
 	}
-	
-	
-	
 
 	// Retrieve all transactions for a user
 	public List<Transaction> getTransactionsByUser(int userId) {
@@ -84,7 +97,7 @@ public class TransactionService {
 			System.out.println("Category cannot be empty.");
 			return new ArrayList<>();
 		}
-
+		category = category.trim().toLowerCase();
 		if (!VALID_CATEGORIES.contains(category)) {
 			System.out.println("Invalid category.");
 			return new ArrayList<>();
@@ -93,10 +106,6 @@ public class TransactionService {
 		return TransactionDAO.getTransactionsByCategory(userId, category);
 	}
 
-	
-	
-	
-	
 	// delete transaction based on pre check of existence of transaction
 	public String deleteTransaction(int transactionId, int userId) {
 		if (transactionId <= 0 || userId <= 0) {
@@ -115,23 +124,19 @@ public class TransactionService {
 		boolean deleted = TransactionDAO.deleteTransaction(transactionId, userId);
 		return deleted ? "Transaction deleted successfully" : "Failed to delete transaction";
 	}
-	
-	
-	
-	
-	//update the transaction
+
+	// update the transaction
 	public String updateTransaction(Transaction transaction) {
-	    if (transaction.getId() <= 0 || transaction.getUserId() <= 0) {
-	        return "Invalid transaction or user ID";
-	    }
+		if (transaction.getId() <= 0 || transaction.getUserId() <= 0) {
+			return "Invalid transaction or user ID";
+		}
 
-	    String validation = validateTransaction(transaction);
-	    if (!validation.equals("success")) return validation;
+		ValidationResult validation = validateTransaction(transaction);
+		if (!validation.isValid())
+			return validation.getMessage();
 
-	    boolean updated = TransactionDAO.updateTransaction(transaction);
-	    return updated ? "Transaction updated successfully" : "Failed to update transaction";
+		boolean updated = TransactionDAO.updateTransaction(transaction);
+		return updated ? "Transaction updated successfully" : "Failed to update transaction";
 	}
-	
-	
 
 }

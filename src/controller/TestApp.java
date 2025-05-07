@@ -46,9 +46,11 @@ public class TestApp {
                         loggedInUser = userService.login(loginEmail, loginPass);
                         if (loggedInUser != null) {
                             System.out.println("✅ Login successful");
-                        } else {
-                            System.out.println("❌ Invalid credentials");
+                        } 
+                        else {
+                            System.out.println("❌ Login failed. Please check your credentials.");
                         }
+
                         break;
 
                     case 0:
@@ -76,8 +78,7 @@ public class TestApp {
 
                         System.out.print("Amount: ");
                         double amount = scanner.nextDouble();
-                        scanner.nextLine();
-
+       
                         System.out.print("Category: ");
                         String category = scanner.nextLine();
 

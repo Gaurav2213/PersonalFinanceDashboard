@@ -2,121 +2,98 @@ package service;
 
 import dao.UserDAO;
 import model.User;
+import model.ValidationResult;
 
 public class UserService {
-	
-	//helper method to validate password
-	
-	private String validatePassword(String password) {
+	// Helper method to validate name
+	private ValidationResult validateName(String name) {
+	    if (name == null || name.trim().isEmpty()) {
+	        return new ValidationResult(false, "Name cannot be empty");
+	    }
+	    if (!name.matches("^[A-Za-z ]+$")) {
+	        return new ValidationResult(false, "Name can only contain letters and spaces");
+	    }
+	    return new ValidationResult(true, "valid");
+	}
+
+	// Helper method to validate password
+	private ValidationResult validatePassword(String password) {
 	    if (password == null || password.trim().isEmpty()) {
-	        return "Password cannot be empty";
+	        return new ValidationResult(false, "Password cannot be empty");
 	    }
 
 	    if (password.length() < 6) {
-	        return "Password must be at least 6 characters long";
+	        return new ValidationResult(false, "Password must be at least 6 characters long");
 	    }
 
 	    if (!password.matches("^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*]).{6,}$")) {
-	        return "Password must contain uppercase, number, and special character";
+	        return new ValidationResult(false, "Password must contain uppercase, number, and special character");
 	    }
 
-	    return "valid";
+	    return new ValidationResult(true, "valid");
 	}
 
-	
-//helper method to validate email with extra protection layer for email domain 
-	private String validateEmail(String email) {
+	// Helper method to validate email with extra protection layer for email domain
+	private ValidationResult validateEmail(String email) {
 	    if (email == null || email.trim().isEmpty()) {
-	        return "Email cannot be empty";
+	        return new ValidationResult(false, "Email cannot be empty");
 	    }
 
 	    if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-	        return "Invalid email format";
+	        return new ValidationResult(false, "Invalid email format");
 	    }
 
 	    String[] allowedDomains = { "gmail.com", "yahoo.com", "outlook.com", "hotmail.com" };
 	    String domain = email.substring(email.indexOf("@") + 1);
 
-	    boolean domainAllowed = false;
 	    for (String allowed : allowedDomains) {
 	        if (domain.equalsIgnoreCase(allowed)) {
-	            domainAllowed = true;
-	            break;
+	            return new ValidationResult(true, "valid");
 	        }
 	    }
 
-	    if (!domainAllowed) {
-	        return "Email domain is not supported. Use Gmail, Yahoo, Outlook, or Hotmail.";
+	    return new ValidationResult(false, "Email domain is not supported. Use Gmail, Yahoo, Outlook, or Hotmail.");
+	}
+
+	// Register a new user with validation
+	public String register(User user) {
+	    ValidationResult nameResult = validateName(user.getName());
+	    if (!nameResult.isValid()) return nameResult.getMessage();
+
+	    ValidationResult emailResult = validateEmail(user.getEmail());
+	    if (!emailResult.isValid()) return emailResult.getMessage();
+
+	    ValidationResult passwordResult = validatePassword(user.getPassword());
+	    if (!passwordResult.isValid()) return passwordResult.getMessage();
+
+	    if (UserDAO.getUserByEmail(user.getEmail()) != null) {
+	        return "Email is already registered";
 	    }
 
-	    return "valid";
+	    boolean success = UserDAO.registerUser(user);
+	    return success ? "success" : "Registration failed. Please try again.";
 	}
-	
 
-	
-	
-	// Register a new user with validation
-    public String register(User user) {
-        // Validate name
-        if (user.getName() == null || user.getName().trim().isEmpty()) {
-            return "Name cannot be empty";
-        }
-       
-        else if (!user.getName().matches("^[A-Za-z ]+$")) {
-            return "Name can only contain letters and spaces";
-        }
+	// Login with validation
+	public User login(String email, String password) {
+	    ValidationResult emailResult = validateEmail(email);
+	    if (!emailResult.isValid()) {
+	        System.out.println(emailResult.getMessage());
+	        return null;
+	    }
+	    
+	    ValidationResult passwordResult = validatePassword(password);
+	    if (!passwordResult.isValid()) {
+	        System.out.println(passwordResult.getMessage());
+	        return null;
+	    }
 
-        // Validate email
-        String emailValidation = validateEmail(user.getEmail());
-        if (!emailValidation.equals("valid")) {
-            return emailValidation;
-        }
+	    User user = UserDAO.getUserByEmail(email);
+	    if (user != null && user.getPassword().equals(password)) {
+	        return user;
+	    }
 
-
-        // Validate password
-        String passwordValidation = validatePassword(user.getPassword());
-        if (!passwordValidation.equals("valid")) {
-            return passwordValidation;
-        }
-
-
-        // Check for duplicate email
-        if (UserDAO.getUserByEmail(user.getEmail()) != null) {
-            return "Email is already registered";
-        }
-
-        // Register user through DAO
-        boolean success = UserDAO.registerUser(user);
-        return success ? "success" : "Registration failed. Please try again.";
-    }
-    
-    
-
-    // Login with validation
-    public User login(String email, String password) {
-    	
-        // Validate email
-    	String emailValidation = validateEmail(email);
-    	if (!emailValidation.equals("valid")) {
-    	    System.out.println(emailValidation); // shows: "Invalid email format" or "Unsupported domain"
-    	    return null;
-    	}
-        
-
-        // Validate password
-    	String passwordValidation = validatePassword(password);
-    	if (!passwordValidation.equals("valid")) {
-    	    System.out.println(passwordValidation);
-    	    return null;
-    	}
-
-        // Authenticate user
-        User user = UserDAO.getUserByEmail(email);
-        if (user != null && user.getPassword().equals(password)) {
-            return user;
-        }
-
-        System.out.println("Invalid email or password.");
-        return null;
-    }
+	    System.out.println("Invalid email or password.");
+	    return null;
+}
 }
