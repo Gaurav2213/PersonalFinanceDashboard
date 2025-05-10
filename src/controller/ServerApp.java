@@ -19,6 +19,7 @@ public class ServerApp {
       
         server.createContext("/register", new RegisterHandler());
 
+        server.createContext("/login", new LoginHandler());
         // Use fixed thread pool
         server.setExecutor(Executors.newFixedThreadPool(10));
 

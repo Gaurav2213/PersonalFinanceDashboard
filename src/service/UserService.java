@@ -5,6 +5,30 @@ import model.User;
 import model.ValidationResult;
 
 public class UserService {
+	
+	// Login with validation (used by API handler)
+	public ValidationResult loginWithValidation(String email, String password) {
+	    // Validate email format and domain
+	    ValidationResult emailResult = validateEmail(email);
+	    if (!emailResult.isValid()) {
+	        return emailResult;
+	    }
+
+	    // Validate password format
+	    ValidationResult passwordResult = validatePassword(password);
+	    if (!passwordResult.isValid()) {
+	        return passwordResult;
+	    }
+
+	    // Check user existence and password match
+	    User user = UserDAO.getUserByEmail(email);
+	    if (user != null && user.getPassword().equals(password)) {
+	        return new ValidationResult(true, "Login successful");
+	    }
+
+	    return new ValidationResult(false, "Invalid email or password");
+	}
+
 	// Helper method to validate name
 	private ValidationResult validateName(String name) {
 	    if (name == null || name.trim().isEmpty()) {
@@ -82,24 +106,10 @@ public class UserService {
 
 	// Login with validation
 	public User login(String email, String password) {
-	    ValidationResult emailResult = validateEmail(email);
-	    if (!emailResult.isValid()) {
-	        System.out.println(emailResult.getMessage());
-	        return null;
+	    ValidationResult result = loginWithValidation(email, password);
+	    if (result.isValid()) {
+	        return UserDAO.getUserByEmail(email); // Already authenticated
 	    }
-	    
-	    ValidationResult passwordResult = validatePassword(password);
-	    if (!passwordResult.isValid()) {
-	        System.out.println(passwordResult.getMessage());
-	        return null;
-	    }
-
-	    User user = UserDAO.getUserByEmail(email);
-	    if (user != null && user.getPassword().equals(password)) {
-	        return user;
-	    }
-
-	    System.out.println("Invalid email or password.");
 	    return null;
 }
 }
