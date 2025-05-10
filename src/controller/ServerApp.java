@@ -1,44 +1,41 @@
 package controller;
+
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 
 import java.io.IOException;
 import java.io.OutputStream;
-
-import java.util.concurrent.Executor;
 import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
 
 public class ServerApp {
-	  public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException {
+        // Create server on port 8000
+        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
 
-		  //create  a server 
-		  HttpServer server = HttpServer.create(new InetSocketAddress(8000),0);
-		  
-		  //create context or mapping url with particular httpHandler object
-		  server.createContext( "/test", new MyHandle());
-		  
-		  //start the server
-		  server.setExecutor(null);//CREATE A DEFAULT THREADPOOL IN THAT SERVER 
-		  server.start();
-		  
-		  System.out.println("Server is running on the port 8000"); 
-		  
-}
-	  
-	  //user definde handler 
-	  static class MyHandle implements HttpHandler
-	  {
-		  @Override
-		  public void handle(HttpExchange exchange) throws IOException 
-	        {
-			  String Response = "Hello this is a simple http server response in against fo that http mapping request";
-			  exchange.sendResponseHeaders(200, Response.length());
-			OutputStream os =   exchange.getResponseBody();
-			os.write(Response.getBytes());
-			os.close();
-	  }
-	  
-	  
-}
+        // Register test endpoint
+        server.createContext("/test", new TestHandler());
+      
+        server.createContext("/register", new RegisterHandler());
+
+        // Use fixed thread pool
+        server.setExecutor(Executors.newFixedThreadPool(10));
+
+        // Start server
+        server.start();
+        System.out.println("🚀 Server is running on port 8000");
+    }
+
+    // Custom test handler
+    static class TestHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            String response = "✅ Hello! This is a response from your test endpoint.";
+            exchange.sendResponseHeaders(200, response.length());
+            OutputStream os = exchange.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
+        }
+    }
 }

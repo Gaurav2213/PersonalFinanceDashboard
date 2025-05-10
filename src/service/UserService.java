@@ -56,22 +56,28 @@ public class UserService {
 	}
 
 	// Register a new user with validation
-	public String register(User user) {
+	public ValidationResult register(User user) {
 	    ValidationResult nameResult = validateName(user.getName());
-	    if (!nameResult.isValid()) return nameResult.getMessage();
+	    if (!nameResult.isValid()) return nameResult;
 
 	    ValidationResult emailResult = validateEmail(user.getEmail());
-	    if (!emailResult.isValid()) return emailResult.getMessage();
+	    if (!emailResult.isValid()) return emailResult;
 
 	    ValidationResult passwordResult = validatePassword(user.getPassword());
-	    if (!passwordResult.isValid()) return passwordResult.getMessage();
+	    if (!passwordResult.isValid()) return passwordResult;
 
+	    // Check for duplicate email
 	    if (UserDAO.getUserByEmail(user.getEmail()) != null) {
-	        return "Email is already registered";
+	        return new ValidationResult(false, "Email is already registered");
 	    }
 
+	    // If everything is valid and user not registered yet
 	    boolean success = UserDAO.registerUser(user);
-	    return success ? "success" : "Registration failed. Please try again.";
+	    if (success) {
+	        return new ValidationResult(true, "User registered successfully");
+	    } else {
+	        return new ValidationResult(false, "Registration failed. Please try again.");
+	    }
 	}
 
 	// Login with validation
