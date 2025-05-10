@@ -56,25 +56,46 @@ public class TransactionService {
 		transaction.setCategory(category); // Normalize the input
 
 		// validate the description
-		if (transaction.getDescription() != null && transaction.getDescription().length() > 255) {
-			return new ValidationResult(false, "Description cannot exceed 255 characters");
+		String description = transaction.getDescription();
+
+		if (description == null || description.trim().isEmpty()) {
+		    return new ValidationResult(false, "Description cannot be empty");
 		}
+
+		if (description.trim().length() < 3) {
+		    return new ValidationResult(false, "Description must be at least 3 characters long");
+		}
+
+		if (description.length() > 255) {
+		    return new ValidationResult(false, "Description cannot exceed 255 characters");
+		}
+
 
 		return new ValidationResult(true, "success");
 	}
 
+	
 	// Add a new transaction (income or expense)
-	public String addTransaction(Transaction transaction) {
+	public ValidationResult addTransaction(Transaction transaction) {
+	    // Validate transaction
+	    ValidationResult validation = validateTransaction(transaction);
+	    if (!validation.isValid()) return validation;
 
-		// validate the user input for registration
-		ValidationResult validation = validateTransaction(transaction);
-		if (!validation.isValid())
-			return validation.getMessage();
-
-		// Save transaction
-		boolean success = TransactionDAO.addTransaction(transaction);
-		return success ? "success" : "Failed to add transaction";
+	    
+	 // Check for duplicates
+	    if (TransactionDAO.isDuplicateTransaction(transaction)) {
+	        return new ValidationResult(false, "Duplicate transaction not allowed");
+	    }
+	    
+	    // Try to save
+	    boolean success = TransactionDAO.addTransaction(transaction);
+	    if (success) {
+	        return new ValidationResult(true, "Transaction added successfully");
+	    } else {
+	        return new ValidationResult(false, "Failed to add transaction");
+	    }
 	}
+
 
 	// Retrieve all transactions for a user
 	public List<Transaction> getTransactionsByUser(int userId) {

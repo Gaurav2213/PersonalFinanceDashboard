@@ -20,6 +20,11 @@ public class ServerApp {
         server.createContext("/register", new RegisterHandler());
 
         server.createContext("/login", new LoginHandler());
+        
+        server.createContext("/transaction/add",new AddTransactionHandler());
+
+        server.createContext("/transaction/all", new GetAllTransactionsHandler());
+
         // Use fixed thread pool
         server.setExecutor(Executors.newFixedThreadPool(10));
 

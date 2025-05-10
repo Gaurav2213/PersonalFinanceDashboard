@@ -11,6 +11,27 @@ import util.DBConnection;
 
 public class TransactionDAO {
 
+	public static boolean isDuplicateTransaction(Transaction t) {
+	    String sql = "SELECT COUNT(*) FROM transactions WHERE user_id = ? AND type = ? AND amount = ? AND category = ? AND date = ?";
+	    
+	    try (Connection conn = DBConnection.getConnection();
+	         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+	        stmt.setInt(1, t.getUserId());
+	        stmt.setString(2, t.getType());
+	        stmt.setDouble(3, t.getAmount());
+	        stmt.setString(4, t.getCategory());
+	        stmt.setDate(5, t.getDate());
+
+	        ResultSet rs = stmt.executeQuery();
+	        if (rs.next()) {
+	            return rs.getInt(1) > 0; // if count > 0, duplicate exists
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	    return false;
+	}
 
     // Insert a new transaction
     public static boolean addTransaction(Transaction t) {
