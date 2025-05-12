@@ -6,8 +6,9 @@ import java.util.List;
 
 import dao.TransactionDAO;
 import model.Transaction;
+import model.User;
 import model.ValidationResult;
-
+import model.TransactionResponse;
 public class TransactionService {
 
 	// Allowed types for transaction
@@ -95,24 +96,50 @@ public class TransactionService {
 	        return new ValidationResult(false, "Failed to add transaction");
 	    }
 	}
+	
+	//validate user user id from database
+	public ValidationResult validateUserId(int userId) {
+		
+	
+
+	    if (userId <= 0) {
+	        return new ValidationResult(false, "Invalid or missing userId");
+	    }
+	    
+
+	    if (dao.UserDAO.getUserById(userId) == null) {
+	        return new ValidationResult(false, "User does not exist");
+	    }
+
+	    return new ValidationResult(true, "valid");
+	}
+
 
 
 	// Retrieve all transactions for a user
-	public List<Transaction> getTransactionsByUser(int userId) {
-		if (userId <= 0) {
-			System.out.println("Invalid user ID.");
-			return new ArrayList<>();
-		}
+	public TransactionResponse getTransactionsByUser(int userId) {
+		 ValidationResult result = validateUserId(userId);
+		    if (!result.isValid()) {
+		        return new TransactionResponse(false, result.getMessage(), null);
+		    }
 
-		return TransactionDAO.getTransactionsByUserId(userId);
+		    List<Transaction> list = TransactionDAO.getTransactionsByUserId(userId);
+		    if (list.isEmpty()) {
+		        return new TransactionResponse(false, "No transactions found for this user", null);
+		    }
+
+		    return new TransactionResponse(true, "Success", list);
 	}
+	
+	
 
 	// Retrieve transactions for a user filtered by category
 	public List<Transaction> getTransactionsByCategory(int userId, String category) {
-		if (userId <= 0) {
-			System.out.println("Invalid user ID.");
-			return new ArrayList<>();
-		}
+		  ValidationResult result = validateUserId(userId);
+		    if (!result.isValid()) {
+		        System.out.println(result.getMessage());
+		        return new ArrayList<>();
+		    }
 
 		if (category == null || category.trim().isEmpty()) {
 			System.out.println("Category cannot be empty.");

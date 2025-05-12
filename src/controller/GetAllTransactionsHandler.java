@@ -3,6 +3,8 @@ package controller;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import model.Transaction;
+import model.TransactionResponse;
+import model.ValidationResult;
 import service.TransactionService;
 
 import java.io.IOException;
@@ -43,38 +45,38 @@ public class GetAllTransactionsHandler implements HttpHandler {
             }
         }
 
-        if (userId <= 0) {
-            String error = "Invalid or missing userId";
-            exchange.sendResponseHeaders(400, error.length());
-            OutputStream os = exchange.getResponseBody();
-            os.write(error.getBytes());
-            os.close();
-            return;
+      
+//fetching the transaction   
+        TransactionResponse txResult = transactionService.getTransactionsByUser(userId);
+
+        JSONObject responseJson = new JSONObject();
+        responseJson.put("success", txResult.isSuccess());
+        responseJson.put("message", txResult.getMessage());
+
+        //validate if the transaction is existing or not then only create an json array object 
+        if (txResult.isSuccess()) {
+            JSONArray txArray = new JSONArray(
+                txResult.getTransactions().stream().map(t -> {
+                    JSONObject obj = new JSONObject();
+                    obj.put("id", t.getId());
+                    obj.put("type", t.getType());
+                    obj.put("amount", t.getAmount());
+                    obj.put("category", t.getCategory());
+                    obj.put("description", t.getDescription());
+                    obj.put("date", t.getDate().toString());
+                    return obj;
+                }).collect(Collectors.toList())
+            );
+            responseJson.put("transactions", txArray);
         }
 
-        // Fetch transactions
-        List<Transaction> transactions = transactionService.getTransactionsByUser(userId);
-
-        // Convert to JSON array
-        JSONArray jsonArray = new JSONArray(
-            transactions.stream().map(t -> {
-                JSONObject obj = new JSONObject();
-                obj.put("id", t.getId());
-                obj.put("type", t.getType());
-                obj.put("amount", t.getAmount());
-                obj.put("category", t.getCategory());
-                obj.put("description", t.getDescription());
-                obj.put("date", t.getDate().toString());
-                return obj;
-            }).collect(Collectors.toList())
-        );
-
-        // Send response
+     //   send response 
+        byte[] responseBytes = responseJson.toString().getBytes();
         exchange.getResponseHeaders().set("Content-Type", "application/json");
-        byte[] responseBytes = jsonArray.toString().getBytes();
         exchange.sendResponseHeaders(200, responseBytes.length);
         OutputStream os = exchange.getResponseBody();
         os.write(responseBytes);
         os.close();
+
     }
 }
