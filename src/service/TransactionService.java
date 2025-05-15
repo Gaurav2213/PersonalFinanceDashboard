@@ -17,6 +17,41 @@ public class TransactionService {
 	// Allowed categories for dropdown selection
 	private static final List<String> VALID_CATEGORIES = Arrays.asList("food", "transport", "utilities", "shopping",
 			"health", "salary", "entertainment", "other");
+	
+	
+	
+	
+	//validate the category of transaction 
+	public ValidationResult validateCategory(String category) {
+	    if (category == null || category.trim().isEmpty()) {
+	        return new ValidationResult(false, "Category cannot be empty");
+	    }
+
+	    category = category.trim().toLowerCase();
+	    if (!VALID_CATEGORIES.contains(category)) {
+	        return new ValidationResult(false, "Invalid category");
+	    }
+
+	    return new ValidationResult(true, "valid");
+	   
+	}
+	
+	 // Validate transaction ID
+	private ValidationResult validateTransactionId(int transactionId) {
+	    if (transactionId <= 0) {
+	        return new ValidationResult(false, "Invalid transaction ID");
+	    }
+
+	    if (TransactionDAO.getTransactionById(transactionId) == null) {
+	        return new ValidationResult(false, "Transaction does not exist");
+	    }
+
+	    return new ValidationResult(true, "valid");
+	}
+
+	
+	
+	
 
 	// reuse the common validation practice in all the methods
 	private ValidationResult validateTransaction(Transaction transaction) {
@@ -36,6 +71,7 @@ public class TransactionService {
 
 		transaction.setType(type); // normalized update
 
+		
 		// Validate date
 		if (transaction.getDate() == null) {
 			return new ValidationResult(false, "Date cannot be null");
@@ -46,16 +82,15 @@ public class TransactionService {
 		}
 
 		// Validate and clean category
-		if (transaction.getCategory() == null || transaction.getCategory().trim().isEmpty()) {
-			return new ValidationResult(false, "Category cannot be empty");
+		ValidationResult categoryResult = validateCategory(transaction.getCategory());
+		if (!categoryResult.isValid()) {
+		    return categoryResult;
 		}
+		
+		 // Normalize the input
+		transaction.setCategory(transaction.getCategory().trim().toLowerCase()); // Normalize
 
-		String category = transaction.getCategory().trim().toLowerCase();
-		if (!VALID_CATEGORIES.contains(category)) {
-			return new ValidationResult(false, "Invalid category selected");
-		}
-		transaction.setCategory(category); // Normalize the input
-
+	        
 		// validate the description
 		String description = transaction.getDescription();
 
@@ -74,6 +109,24 @@ public class TransactionService {
 
 		return new ValidationResult(true, "success");
 	}
+
+	//validate user user id from database
+	public ValidationResult validateUserId(int userId) {
+		
+	
+
+	    if (userId <= 0) {
+	        return new ValidationResult(false, "Invalid or missing userId");
+	    }
+	    
+
+	    if (dao.UserDAO.getUserById(userId) == null) {
+	        return new ValidationResult(false, "User does not exist");
+	    }
+
+	    return new ValidationResult(true, "valid");
+	}
+
 
 	
 	// Add a new transaction (income or expense)
@@ -97,22 +150,6 @@ public class TransactionService {
 	    }
 	}
 	
-	//validate user user id from database
-	public ValidationResult validateUserId(int userId) {
-		
-	
-
-	    if (userId <= 0) {
-	        return new ValidationResult(false, "Invalid or missing userId");
-	    }
-	    
-
-	    if (dao.UserDAO.getUserById(userId) == null) {
-	        return new ValidationResult(false, "User does not exist");
-	    }
-
-	    return new ValidationResult(true, "valid");
-	}
 
 
 
@@ -134,24 +171,28 @@ public class TransactionService {
 	
 
 	// Retrieve transactions for a user filtered by category
-	public List<Transaction> getTransactionsByCategory(int userId, String category) {
-		  ValidationResult result = validateUserId(userId);
-		    if (!result.isValid()) {
-		        System.out.println(result.getMessage());
-		        return new ArrayList<>();
-		    }
+	public TransactionResponse getTransactionsByCategory(int userId, String category) {
+		category = category.toLowerCase().trim();
+	    // Validate user
+	    ValidationResult userResult = validateUserId(userId);
+	    if (!userResult.isValid()) {
+	        return new TransactionResponse(false, userResult.getMessage(), null);
+	    }
 
-		if (category == null || category.trim().isEmpty()) {
-			System.out.println("Category cannot be empty.");
-			return new ArrayList<>();
-		}
-		category = category.trim().toLowerCase();
-		if (!VALID_CATEGORIES.contains(category)) {
-			System.out.println("Invalid category.");
-			return new ArrayList<>();
-		}
+	    // Validate category
+	    ValidationResult categoryResult = validateCategory(category);
+	    if (!categoryResult.isValid()) {
+	        return new TransactionResponse(false, categoryResult.getMessage(), null);
+	    }
 
-		return TransactionDAO.getTransactionsByCategory(userId, category);
+	    // Fetch transactions
+	    List<Transaction> transactions = TransactionDAO.getTransactionsByCategory(userId, category);
+	    
+	    if (transactions.isEmpty()) {
+	        return new TransactionResponse(false, "No transactions found for this category", null);
+	    }
+
+	    return new TransactionResponse(true, "Success", transactions);
 	}
 
 	// delete transaction based on pre check of existence of transaction
@@ -174,17 +215,30 @@ public class TransactionService {
 	}
 
 	// update the transaction
-	public String updateTransaction(Transaction transaction) {
-		if (transaction.getId() <= 0 || transaction.getUserId() <= 0) {
-			return "Invalid transaction or user ID";
-		}
+	public TransactionResponse updateTransaction(Transaction transaction) {
+	    // Validate transaction ID
+	    ValidationResult idResult = validateTransactionId(transaction.getId());
+	    if (!idResult.isValid()) {
+	        return new TransactionResponse(false, idResult.getMessage(), null);
+	    }
 
-		ValidationResult validation = validateTransaction(transaction);
-		if (!validation.isValid())
-			return validation.getMessage();
+	    // Validate user ID
+	    ValidationResult userResult = validateUserId(transaction.getUserId());
+	    if (!userResult.isValid()) {
+	        return new TransactionResponse(false, userResult.getMessage(), null);
+	    }
 
-		boolean updated = TransactionDAO.updateTransaction(transaction);
-		return updated ? "Transaction updated successfully" : "Failed to update transaction";
+	    // Validate transaction fields
+	    ValidationResult fieldValidation = validateTransaction(transaction);
+	    if (!fieldValidation.isValid()) {
+	        return new TransactionResponse(false, fieldValidation.getMessage(), null);
+	    }
+
+	    // Update
+	    boolean updated = TransactionDAO.updateTransaction(transaction);
+	    return updated
+	        ? new TransactionResponse(true, "Transaction updated successfully", List.of(transaction))
+	        : new TransactionResponse(false, "Failed to update transaction", null);
 	}
 
 }

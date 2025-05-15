@@ -24,6 +24,10 @@ public class ServerApp {
         server.createContext("/transaction/add",new AddTransactionHandler());
 
         server.createContext("/transaction/all", new GetAllTransactionsHandler());
+        
+        server.createContext("/transaction/category", new GetTransactionsByCategoryHandler());
+        server.createContext("/transaction/update", new UpdateTransactionHandler());
+
 
         // Use fixed thread pool
         server.setExecutor(Executors.newFixedThreadPool(10));

@@ -32,6 +32,37 @@ public class TransactionDAO {
 	    }
 	    return false;
 	}
+	
+	
+	// fetch transaction based on transaction id
+	public static Transaction getTransactionById(int transactionId) {
+	    String sql = "SELECT * FROM transactions WHERE id = ?";
+
+	    try (Connection conn = DBConnection.getConnection();
+	         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+	        stmt.setInt(1, transactionId);
+	        ResultSet rs = stmt.executeQuery();
+
+	        if (rs.next()) {
+	            return new Transaction(
+	                rs.getInt("id"),
+	                rs.getInt("user_id"),
+	                rs.getString("type"),
+	                rs.getDouble("amount"),
+	                rs.getString("category"),
+	                rs.getString("description"),
+	                rs.getDate("date")
+	            );
+	        }
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+
+	    return null;
+	}
+
 
     // Insert a new transaction
     public static boolean addTransaction(Transaction t) {
@@ -90,7 +121,7 @@ public class TransactionDAO {
     //filter the transaction of the user based on category 
     public static List<Transaction> getTransactionsByCategory(int userId, String category) {
         List<Transaction> transactions = new ArrayList<>();
-        String sql = "SELECT * FROM transactions WHERE user_id = ? AND category = ? ORDER BY date DESC";
+        String sql = "SELECT * FROM transactions WHERE user_id = ? AND LOWER(category) = ? ORDER BY date DESC";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
