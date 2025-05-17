@@ -28,6 +28,8 @@ public class ServerApp {
         server.createContext("/transaction/category", new GetTransactionsByCategoryHandler());
         server.createContext("/transaction/update", new UpdateTransactionHandler());
 
+        server.createContext("/transaction/delete", new DeleteTransactionHandler());
+
 
         // Use fixed thread pool
         server.setExecutor(Executors.newFixedThreadPool(10));

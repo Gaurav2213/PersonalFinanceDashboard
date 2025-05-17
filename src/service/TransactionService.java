@@ -196,23 +196,30 @@ public class TransactionService {
 	}
 
 	// delete transaction based on pre check of existence of transaction
-	public String deleteTransaction(int transactionId, int userId) {
-		if (transactionId <= 0 || userId <= 0) {
-			return "Invalid transaction or user ID";
-		}
+	public TransactionResponse deleteTransaction(int transactionId, int userId) {
+	    ValidationResult idResult = validateTransactionId(transactionId);
+	    if (!idResult.isValid()) {
+	        return new TransactionResponse(false, idResult.getMessage(), null);
+	    }
 
-		// Check if the transaction exists for this user
-		List<Transaction> transactions = TransactionDAO.getTransactionsByUserId(userId);
-		boolean exists = transactions.stream().anyMatch(tx -> tx.getId() == transactionId);
+	    ValidationResult userResult = validateUserId(userId);
+	    if (!userResult.isValid()) {
+	        return new TransactionResponse(false, userResult.getMessage(), null);
+	    }
 
-		if (!exists) {
-			return "Transaction not found for this user.";
-		}
+	    List<Transaction> transactions = TransactionDAO.getTransactionsByUserId(userId);
+	    boolean exists = transactions.stream().anyMatch(tx -> tx.getId() == transactionId);
 
-		// Proceed to delete
-		boolean deleted = TransactionDAO.deleteTransaction(transactionId, userId);
-		return deleted ? "Transaction deleted successfully" : "Failed to delete transaction";
+	    if (!exists) {
+	        return new TransactionResponse(false, "Transaction not found for this user", null);
+	    }
+
+	    boolean deleted = TransactionDAO.deleteTransaction(transactionId, userId);
+	    return deleted
+	        ? new TransactionResponse(true, "Transaction deleted successfully", null)
+	        : new TransactionResponse(false, "Failed to delete transaction", null);
 	}
+
 
 	// update the transaction
 	public TransactionResponse updateTransaction(Transaction transaction) {
