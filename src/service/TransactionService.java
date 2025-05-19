@@ -22,7 +22,7 @@ public class TransactionService {
 	
 	
 	//validate the category of transaction 
-	public ValidationResult validateCategory(String category) {
+	public  static ValidationResult  validateCategory(String category) {
 	    if (category == null || category.trim().isEmpty()) {
 	        return new ValidationResult(false, "Category cannot be empty");
 	    }
@@ -54,7 +54,7 @@ public class TransactionService {
 	
 
 	// reuse the common validation practice in all the methods
-	private ValidationResult validateTransaction(Transaction transaction) {
+	private static ValidationResult validateTransaction(Transaction transaction) {
 		// Validate amount
 		if (transaction.getAmount() <= 0) {
 			return new ValidationResult(false, "Amount must be greater than 0");
@@ -247,5 +247,28 @@ public class TransactionService {
 	        ? new TransactionResponse(true, "Transaction updated successfully", List.of(transaction))
 	        : new TransactionResponse(false, "Failed to update transaction", null);
 	}
+	
+	
+	
+	
+	//batch operations ***************************************
+	
+	public static ValidationResult addTransactionsBatch(List<Transaction> transactions) {
+	    for (Transaction tx : transactions) {
+	        ValidationResult result = validateTransaction(tx);
+	        if (!result.isValid()) {
+	            return result;
+	        }
+	    }
+
+	    boolean success = TransactionDAO.addTransactionsBatch(transactions);
+	    return success 
+	        ? new ValidationResult(true, "All transactions added successfully.")
+	        : new ValidationResult(false, "Failed to add transactions.");
+	}
+
+	
+	
+	
 
 }

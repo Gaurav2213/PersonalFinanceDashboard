@@ -3,7 +3,9 @@ package dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import model.Transaction;
@@ -192,6 +194,45 @@ public class TransactionDAO {
         }
     }
 
+    
+    //batch operations ******************************************************************
+    
+    public static boolean addTransactionsBatch(List<Transaction> transactions) {
+        String sql = "INSERT INTO transactions (user_id, amount, category, type, date, description) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            conn.setAutoCommit(false);
+
+            for (Transaction tx : transactions) {
+                stmt.setInt(1, tx.getUserId());
+                stmt.setDouble(2, tx.getAmount());
+                stmt.setString(3, tx.getCategory());
+                stmt.setString(4, tx.getType());
+                stmt.setDate(5, tx.getDate());
+                stmt.setString(6, tx.getDescription());
+                stmt.addBatch();
+            }
+
+            stmt.executeBatch();
+            conn.commit();
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
 }

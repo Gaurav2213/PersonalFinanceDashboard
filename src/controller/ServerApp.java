@@ -1,6 +1,9 @@
 package controller;
 
 import com.sun.net.httpserver.HttpServer;
+
+import controller.batch.AddTransactionsBatchHandler;
+
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 
@@ -29,6 +32,7 @@ public class ServerApp {
         server.createContext("/transaction/update", new UpdateTransactionHandler());
 
         server.createContext("/transaction/delete", new DeleteTransactionHandler());
+        server.createContext("/transactions/batch-add", new AddTransactionsBatchHandler());
 
 
         // Use fixed thread pool
