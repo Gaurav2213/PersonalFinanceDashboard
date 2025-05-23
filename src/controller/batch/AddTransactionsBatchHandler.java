@@ -16,21 +16,29 @@ public class AddTransactionsBatchHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        // Allow only POST requests
         if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
             Utils.sendResponse(exchange, 405, "Method Not Allowed");
             return;
         }
 
-        // Parse request body to List<Transaction>
-        List<Transaction> transactions = Utils.parseRequestBodyList(
-            exchange.getRequestBody(), new TypeReference<List<Transaction>>() {}
-        );
+        try {
+            List<Transaction> transactions = Utils.parseRequestBodyList(
+                exchange.getRequestBody(), new TypeReference<List<Transaction>>() {}
+            );
 
-        // Call service method to process batch add
-        ValidationResult result = TransactionService.addTransactionsBatch(transactions);
+            ValidationResult result = TransactionService.addTransactionsBatch(transactions);
+            Utils.sendResponse(exchange, result.isValid() ? 200 : 400, result.getMessage());
 
-        // Return success or error message
-        Utils.sendResponse(exchange, result.isValid() ? 200 : 400, result.getMessage());
+        } catch (com.fasterxml.jackson.databind.exc.InvalidFormatException e) {
+            // Specific error for badly formatted date (or enum/type)
+            if (e.getMessage().contains("java.sql.Date")) {
+                Utils.sendResponse(exchange, 400, "Invalid date format. Please use 'yyyy-MM-dd'.");
+            } else {
+                Utils.sendResponse(exchange, 400, "Invalid value format in JSON: " + e.getOriginalMessage());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();  // Still useful for debugging
+            Utils.sendResponse(exchange, 500, "Internal Server Error: " + e.getMessage());
+        }
     }
 }

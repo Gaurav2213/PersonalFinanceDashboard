@@ -2,7 +2,9 @@ package service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import dao.TransactionDAO;
 import model.Transaction;
@@ -10,6 +12,14 @@ import model.User;
 import model.ValidationResult;
 import model.TransactionResponse;
 public class TransactionService {
+
+	private static String generateSignature(Transaction tx) {
+	    return tx.getUserId() + "|" +
+	           tx.getType().toLowerCase() + "|" +
+	           tx.getAmount() + "|" +
+	           tx.getCategory().toLowerCase() + "|" +
+	           tx.getDate();
+	}
 
 	// Allowed types for transaction
 	private static final List<String> VALID_TYPES = Arrays.asList("income", "expense");
@@ -55,6 +65,11 @@ public class TransactionService {
 
 	// reuse the common validation practice in all the methods
 	private static ValidationResult validateTransaction(Transaction transaction) {
+		
+		   if (transaction == null) {
+		        return new ValidationResult(false, "Transaction object cannot be null");
+		    }
+		
 		// Validate amount
 		if (transaction.getAmount() <= 0) {
 			return new ValidationResult(false, "Amount must be greater than 0");
@@ -252,19 +267,53 @@ public class TransactionService {
 	
 	
 	//batch operations ***************************************
-	
 	public static ValidationResult addTransactionsBatch(List<Transaction> transactions) {
-	    for (Transaction tx : transactions) {
-	        ValidationResult result = validateTransaction(tx);
-	        if (!result.isValid()) {
-	            return result;
-	        }
+	    if (transactions == null || transactions.isEmpty()) {
+	        return new ValidationResult(false, "Transaction list cannot be empty");
+	    }
+	    
+	    final int MAX_BATCH_SIZE = 100;
+	    if (transactions.size() > MAX_BATCH_SIZE) {
+	        return new ValidationResult(false, "Batch size exceeds limit of " + MAX_BATCH_SIZE + " transactions.");
 	    }
 
+	    int userId = transactions.get(0).getUserId();  // assumes all transactions belong to the same user
+
+	    // 🔄 Load existing transactions for that user
+	    List<Transaction> existing = TransactionDAO.getTransactionsByUserId(userId);
+
+	    // 🧠 Build a Set of "transaction signatures"
+	    Set<String> existingSignatures = new HashSet<>();
+	    for (Transaction tx : existing) {
+	        existingSignatures.add(generateSignature(tx));
+	    }
+
+	    List<String> errorMessages = new ArrayList<>();
+	    for (int i = 0; i < transactions.size(); i++) {
+	        Transaction tx = transactions.get(i);
+	        ValidationResult result = validateTransaction(tx);
+
+	        if (!result.isValid()) {
+	            errorMessages.add("Transaction " + (i + 1) + ": " + result.getMessage());
+	            continue;
+	        }
+
+	        if (existingSignatures.contains(generateSignature(tx))) {
+	            errorMessages.add("Transaction " + (i + 1) + ": Duplicate transaction not allowed.");
+	        }
+	    }
+	    
+	    if (!errorMessages.isEmpty()) {
+	        String combined = String.join("\n", errorMessages);
+	        return new ValidationResult(false, combined);
+	    }
+
+
+	    // 🔧 Proceed with batch insert
 	    boolean success = TransactionDAO.addTransactionsBatch(transactions);
-	    return success 
-	        ? new ValidationResult(true, "All transactions added successfully.")
-	        : new ValidationResult(false, "Failed to add transactions.");
+	    return success
+	            ? new ValidationResult(true, "All transactions added successfully.")
+	            : new ValidationResult(false, "Failed to add transactions.");
 	}
 
 	

@@ -10,6 +10,10 @@ public class Transaction {
 	    private String category;
 	    private String description;
 	    private Date date;
+	    
+	    public Transaction() {
+	    }
+
 
 	    // Constructor without ID (used when inserting new transactions)
 	    public Transaction(int userId, String type, double amount, String category, String description, Date date) {
