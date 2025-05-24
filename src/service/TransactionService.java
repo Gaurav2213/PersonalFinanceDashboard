@@ -5,14 +5,18 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import dao.TransactionDAO;
 import model.Transaction;
 import model.User;
 import model.ValidationResult;
+import util.Utils;
 import model.TransactionResponse;
 public class TransactionService {
 
+	
+	
 	private static String generateSignature(Transaction tx) {
 	    return tx.getUserId() + "|" +
 	           tx.getType().toLowerCase() + "|" +
@@ -28,6 +32,17 @@ public class TransactionService {
 	private static final List<String> VALID_CATEGORIES = Arrays.asList("food", "transport", "utilities", "shopping",
 			"health", "salary", "entertainment", "other");
 	
+	
+	//validate the user  ownership of user regarding the transaction
+	private static ValidationResult validateOwnership(int userId, int transactionId) {
+	    List<Transaction> userTransactions = TransactionDAO.getTransactionsByUserId(userId);
+	    boolean exists = userTransactions.stream().anyMatch(tx -> tx.getId() == transactionId);
+
+	    return exists
+	        ? new ValidationResult(true, "valid")
+	        : new ValidationResult(false, "Transaction does not belong to the specified user.");
+	}
+
 	
 	
 	
@@ -47,7 +62,7 @@ public class TransactionService {
 	}
 	
 	 // Validate transaction ID
-	private ValidationResult validateTransactionId(int transactionId) {
+	private static ValidationResult validateTransactionId(int transactionId) {
 	    if (transactionId <= 0) {
 	        return new ValidationResult(false, "Invalid transaction ID");
 	    }
@@ -126,7 +141,7 @@ public class TransactionService {
 	}
 
 	//validate user user id from database
-	public ValidationResult validateUserId(int userId) {
+	public static ValidationResult validateUserId(int userId) {
 		
 	
 
@@ -267,15 +282,12 @@ public class TransactionService {
 	
 	
 	//batch operations ***************************************
+	
+
 	public static ValidationResult addTransactionsBatch(List<Transaction> transactions) {
-	    if (transactions == null || transactions.isEmpty()) {
-	        return new ValidationResult(false, "Transaction list cannot be empty");
-	    }
-	    
-	    final int MAX_BATCH_SIZE = 100;
-	    if (transactions.size() > MAX_BATCH_SIZE) {
-	        return new ValidationResult(false, "Batch size exceeds limit of " + MAX_BATCH_SIZE + " transactions.");
-	    }
+		ValidationResult batchSizeResult = Utils.validateTransactionBatchSize(transactions);
+		if (!batchSizeResult.isValid()) return batchSizeResult;
+
 
 	    int userId = transactions.get(0).getUserId();  // assumes all transactions belong to the same user
 
@@ -315,7 +327,125 @@ public class TransactionService {
 	            ? new ValidationResult(true, "All transactions added successfully.")
 	            : new ValidationResult(false, "Failed to add transactions.");
 	}
+	
+	public static ValidationResult updateTransactionsBatch(List<Transaction> transactions) {
+	    // ✅ Batch size + null/empty list validation
+	    ValidationResult batchSizeResult = Utils.validateTransactionBatchSize(transactions);
+	    if (!batchSizeResult.isValid()) return batchSizeResult;
 
+	    List<String> errorMessages = new ArrayList<>();
+	    Set<String> batchSignatures = new HashSet<>();
+
+	    // 🧠 Assume all transactions belong to the same user (like your add logic)
+	    int userId = transactions.get(0).getUserId();
+	    List<Transaction> existing = TransactionDAO.getTransactionsByUserId(userId);
+
+	    // ✅ Build signature set from existing DB records (excluding current update targets)
+	    Set<String> existingSignatures = existing.stream()
+	        .filter(t -> transactions.stream().noneMatch(u -> u.getId() == t.getId()))
+	        .map(TransactionService::generateSignature)
+	        .collect(Collectors.toSet());
+
+	    for (int i = 0; i < transactions.size(); i++) {
+	        Transaction tx = transactions.get(i);
+
+	
+
+	        // ✅ ID + existence validation
+	        ValidationResult idValidation = validateTransactionId(tx.getId());
+	        if (!idValidation.isValid()) {
+	            errorMessages.add("Transaction " + (i + 1) + ": " + idValidation.getMessage());
+	            continue;
+	        }
+	        
+	        //validate the ownership
+	        ValidationResult ownership = validateOwnership(userId, tx.getId());
+	        if (!ownership.isValid()) {
+	            errorMessages.add("Transaction " + (i + 1) + ": " + ownership.getMessage());
+	            continue;
+	        }
+
+
+	        // ✅ Field and null check  validation
+	        ValidationResult txValidation = validateTransaction(tx);
+	        if (!txValidation.isValid()) {
+	            errorMessages.add("Transaction " + (i + 1) + ": " + txValidation.getMessage());
+	            continue;
+	        }
+
+	        // ✅ Duplicate check
+	        String sig = generateSignature(tx);
+
+	        if (existingSignatures.contains(sig)) {
+	            errorMessages.add("Transaction " + (i + 1) + ": would duplicate another existing transaction.");
+	        } else if (!batchSignatures.add(sig)) {
+	            errorMessages.add("Transaction " + (i + 1) + ": duplicates another transaction in this batch.");
+	        }
+	    }
+
+	    if (!errorMessages.isEmpty()) {
+	        return new ValidationResult(false, String.join("\n", errorMessages));
+	    }
+
+	    boolean success = TransactionDAO.updateTransactionsBatch(transactions);
+	    return success
+	            ? new ValidationResult(true, "All transactions updated successfully.")
+	            : new ValidationResult(false, "Failed to update transactions.");
+	}
+
+	
+	public static ValidationResult deleteTransactionsBatch(int userId, List<Integer> transactionIds) {
+	    if (transactionIds == null || transactionIds.isEmpty()) {
+	        return new ValidationResult(false, "Transaction ID list cannot be empty");
+	    }
+
+	    // Validate userId
+	    ValidationResult userResult = validateUserId(userId);
+	    if (!userResult.isValid()) {
+	        return userResult;
+	    }
+
+	    Set<Integer> uniqueIds = new HashSet<>();
+	    List<String> errorMessages = new ArrayList<>();
+
+	    for (int i = 0; i < transactionIds.size(); i++) {
+	        int id = transactionIds.get(i);
+
+	        // ✅ Reuse validation method for transaction ID existence
+	        ValidationResult idResult = validateTransactionId(id);
+	        if (!idResult.isValid()) {
+	            errorMessages.add("Transaction " + (i + 1) + ": " + idResult.getMessage());
+	            continue;
+	        }
+
+	        // ✅ Reuse ownership check
+	        ValidationResult ownership = validateOwnership(userId, id);
+	        if (!ownership.isValid()) {
+	            errorMessages.add("Transaction " + (i + 1) + ": " + ownership.getMessage());
+	            continue;
+	        }
+
+	        // ✅ Check for duplicates in the incoming request
+	        if (!uniqueIds.add(id)) {
+	            errorMessages.add("Transaction " + (i + 1) + ": duplicate ID in request.");
+	        }
+	    }
+
+	    if (!errorMessages.isEmpty()) {
+	        return new ValidationResult(false, String.join("\n", errorMessages));
+	    }
+
+	    boolean success = TransactionDAO.deleteTransactionsBatch(transactionIds, userId);
+	    return success
+	            ? new ValidationResult(true, "All transactions deleted successfully.")
+	            : new ValidationResult(false, "Failed to delete transactions.");
+	}
+
+	
+	
+	
+	
+	
 	
 	
 	

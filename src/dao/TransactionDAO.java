@@ -197,6 +197,7 @@ public class TransactionDAO {
     
     //batch operations ******************************************************************
     
+    //add transactions in batch
     public static boolean addTransactionsBatch(List<Transaction> transactions) {
         String sql = "INSERT INTO transactions (user_id, amount, category, type, date, description) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
@@ -223,6 +224,64 @@ public class TransactionDAO {
             return false;
         }
     }
+    
+    //update the transaction in batch
+    public static boolean updateTransactionsBatch(List<Transaction> transactions) {
+        String sql = "UPDATE transactions SET amount = ?, category = ?, type = ?, date = ?, description = ? WHERE id = ? AND user_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            conn.setAutoCommit(false);
+
+            for (Transaction tx : transactions) {
+                stmt.setDouble(1, tx.getAmount());
+                stmt.setString(2, tx.getCategory());
+                stmt.setString(3, tx.getType());
+                stmt.setDate(4, tx.getDate());
+                stmt.setString(5, tx.getDescription());
+                stmt.setInt(6, tx.getId());
+                stmt.setInt(7, tx.getUserId());
+                stmt.addBatch();
+            }
+
+            stmt.executeBatch();
+            conn.commit();
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    public static boolean deleteTransactionsBatch(List<Integer> ids, int userId) {
+        if (ids == null || ids.isEmpty()) return false;
+
+        String sql = "DELETE FROM transactions WHERE id = ? AND user_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            conn.setAutoCommit(false);  // Start transaction
+
+            for (int id : ids) {
+                stmt.setInt(1, id);
+                stmt.setInt(2, userId);
+                stmt.addBatch();
+            }
+
+            stmt.executeBatch();
+            conn.commit();  // Commit all deletes
+            return true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
 
     
     

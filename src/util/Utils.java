@@ -4,8 +4,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 
+import model.Transaction;
+import model.ValidationResult;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public class Utils {
 
@@ -37,5 +41,21 @@ public class Utils {
         OutputStream os = exchange.getResponseBody();
         os.write(responseBytes);
         os.close();
+    }
+    
+    
+    private static final int MAX_BATCH_SIZE = 100;
+
+    //validate transaction batch size 
+    public static ValidationResult validateTransactionBatchSize(List<Transaction> transactions) {
+        if (transactions == null || transactions.isEmpty()) {
+            return new ValidationResult(false, "Transaction list cannot be empty");
+        }
+
+        if (transactions.size() > MAX_BATCH_SIZE) {
+            return new ValidationResult(false, "Batch size exceeds limit of " + MAX_BATCH_SIZE + " transactions.");
+        }
+
+        return new ValidationResult(true, "Valid batch size");
     }
 }
