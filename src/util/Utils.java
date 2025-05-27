@@ -8,8 +8,11 @@ import model.Transaction;
 import model.ValidationResult;
 
 import java.io.*;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Utils {
 
@@ -58,4 +61,42 @@ public class Utils {
 
         return new ValidationResult(true, "Valid batch size");
     }
+    
+    // * Parses a query string into a Map of key-value pairs.
+    public static Map<String, String> parseQueryParams(String query) {
+        Map<String, String> queryParams = new HashMap<>();
+        if (query == null || query.isEmpty()) return queryParams;
+
+        String[] pairs = query.split("&");
+        for (String pair : pairs) {
+            String[] keyValue = pair.split("=");
+            if (keyValue.length == 2) {
+                queryParams.put(
+                    URLDecoder.decode(keyValue[0], StandardCharsets.UTF_8),
+                    URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8)
+                );
+            }
+        }
+        return queryParams;
+    }
+    
+    /**
+     * Serializes any Java object (e.g., DTO, List, Map) into JSON and sends it as an HTTP response.
+     * This should be used when returning complex data structures like lists or objects.
+     */
+    
+    public static void sendJsonResponse(HttpExchange exchange, Object data, int statusCode) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(data);  // 🧠 Serializes your List<> or DTO
+
+        byte[] responseBytes = json.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", "application/json");
+        exchange.sendResponseHeaders(statusCode, responseBytes.length);
+
+        OutputStream os = exchange.getResponseBody();
+        os.write(responseBytes);
+        os.close();
+    }
+
+
 }

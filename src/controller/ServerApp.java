@@ -2,6 +2,7 @@ package controller;
 
 import com.sun.net.httpserver.HttpServer;
 
+import controller.analytics.TopCategoriesHandler;
 import controller.batch.AddTransactionsBatchHandler;
 import controller.batch.DeleteTransactionsBatchHandler;
 import controller.batch.UpdateTransactionsBatchHandler;
@@ -21,11 +22,14 @@ public class ServerApp {
 
         // Register test endpoint
         server.createContext("/test", new TestHandler());
+        
+        //*****************users controller mapping
       
         server.createContext("/register", new RegisterHandler());
 
         server.createContext("/login", new LoginHandler());
         
+        //******************single operation mapping
         server.createContext("/transaction/add",new AddTransactionHandler());
 
         server.createContext("/transaction/all", new GetAllTransactionsHandler());
@@ -34,11 +38,16 @@ public class ServerApp {
         server.createContext("/transaction/update", new UpdateTransactionHandler());
 
         server.createContext("/transaction/delete", new DeleteTransactionHandler());
+        
+        //*********************batch operation mapping 
         server.createContext("/transactions/batch-add", new AddTransactionsBatchHandler());
 
         server.createContext("/transactions/batch-update", new UpdateTransactionsBatchHandler());
         
         server.createContext("/transactions/batch-delete", new DeleteTransactionsBatchHandler());
+
+        //************* analytics service mapping
+        server.createContext("/analytics/top-categories", new TopCategoriesHandler());
 
 
         // Use fixed thread pool
