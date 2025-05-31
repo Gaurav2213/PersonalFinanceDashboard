@@ -3,8 +3,7 @@ package controller.analytics;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import model.AnalyticsResponse;
-import model.CategoryTotal;
-import model.ValidationResult;
+import model.TimePeriodSpending;
 import service.AnalyticsService;
 import util.Utils;
 
@@ -12,7 +11,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public class TopCategoriesHandler implements HttpHandler {
+public class SpendingSummaryHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -24,30 +23,23 @@ public class TopCategoriesHandler implements HttpHandler {
         Map<String, String> queryParams = Utils.parseQueryParams(exchange.getRequestURI().getQuery());
 
         int userId;
-        int limit;
+        String type = queryParams.getOrDefault("type", "monthly"); // default to monthly if not passed
 
         try {
             userId = Integer.parseInt(queryParams.getOrDefault("userId", "0"));
-            limit = Integer.parseInt(queryParams.getOrDefault("limit", "5")); // default top 5
         } catch (NumberFormatException e) {
-            Utils.sendResponse(exchange, 400, "Invalid query parameter format.");
+            Utils.sendResponse(exchange, 400, "Invalid userId format.");
             return;
         }
 
-        // ✅ Centralized validation of userId, limit, and transactions
-        ValidationResult validation = AnalyticsService.validateUserAnalyticsAccess(userId, limit);
-        if (!validation.isValid()) {
-            Utils.sendResponse(exchange, 400, validation.getMessage());
-            return;
-        }
-
-        // ✅ Fetch top categories and send structured response
-        AnalyticsResponse<List<CategoryTotal>> response = AnalyticsService.getTopSpendingCategories(userId, limit);
+        // 🎯 Call the service method
+        AnalyticsResponse<List<TimePeriodSpending>> response =
+                AnalyticsService.getTimePeriodSpendingSummary(userId, type);
 
         if (!response.isSuccess()) {
             Utils.sendResponse(exchange, 404, response.getMessage());
-            return;
+        } else {
+            Utils.sendJsonResponse(exchange, response, 200);
         }
-        Utils.sendJsonResponse(exchange, response, 200);
     }
 }
