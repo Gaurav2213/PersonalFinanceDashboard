@@ -11,6 +11,7 @@ import dao.TransactionDAO;
 import model.Transaction;
 import model.User;
 import model.ValidationResult;
+import util.CategoryValidator;
 import util.Utils;
 import model.TransactionResponse;
 public class TransactionService {
@@ -28,9 +29,7 @@ public class TransactionService {
 	// Allowed types for transaction
 	private static final List<String> VALID_TYPES = Arrays.asList("income", "expense");
 
-	// Allowed categories for dropdown selection
-	private static final List<String> VALID_CATEGORIES = Arrays.asList("food", "transport", "utilities", "shopping",
-			"health", "salary", "entertainment", "other");
+
 	
 	
 	//validate the user  ownership of user regarding the transaction
@@ -43,23 +42,6 @@ public class TransactionService {
 	        : new ValidationResult(false, "Transaction does not belong to the specified user.");
 	}
 
-	
-	
-	
-	//validate the category of transaction 
-	public  static ValidationResult  validateCategory(String category) {
-	    if (category == null || category.trim().isEmpty()) {
-	        return new ValidationResult(false, "Category cannot be empty");
-	    }
-
-	    category = category.trim().toLowerCase();
-	    if (!VALID_CATEGORIES.contains(category)) {
-	        return new ValidationResult(false, "Invalid category");
-	    }
-
-	    return new ValidationResult(true, "valid");
-	   
-	}
 	
 	 // Validate transaction ID
 	private static ValidationResult validateTransactionId(int transactionId) {
@@ -112,7 +94,7 @@ public class TransactionService {
 		}
 
 		// Validate and clean category
-		ValidationResult categoryResult = validateCategory(transaction.getCategory());
+		ValidationResult categoryResult =  CategoryValidator.validateCategory(transaction.getCategory().trim());
 		if (!categoryResult.isValid()) {
 		    return categoryResult;
 		}
@@ -210,7 +192,8 @@ public class TransactionService {
 	    }
 
 	    // Validate category
-	    ValidationResult categoryResult = validateCategory(category);
+	    ValidationResult categoryResult = CategoryValidator.validateCategory(category);
+;
 	    if (!categoryResult.isValid()) {
 	        return new TransactionResponse(false, categoryResult.getMessage(), null);
 	    }

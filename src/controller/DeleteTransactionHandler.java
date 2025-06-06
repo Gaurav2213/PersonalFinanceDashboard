@@ -51,7 +51,6 @@ public class DeleteTransactionHandler implements HttpHandler {
         JSONObject responseJson = new JSONObject();
         responseJson.put("success", result.isSuccess());
         responseJson.put("message", result.getMessage());
-
         byte[] responseBytes = responseJson.toString().getBytes();
         exchange.getResponseHeaders().set("Content-Type", "application/json");
         exchange.sendResponseHeaders(200, responseBytes.length);

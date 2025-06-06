@@ -7,7 +7,12 @@ import controller.analytics.SpendingSummaryHandler;
 import controller.analytics.TopCategoriesHandler;
 import controller.batch.AddTransactionsBatchHandler;
 import controller.batch.DeleteTransactionsBatchHandler;
+import controller.batch.GetBudgetsByUserHandler;
 import controller.batch.UpdateTransactionsBatchHandler;
+import controller.budget.AddBudgetHandler;
+import controller.budget.DeleteBudgetHandler;
+import controller.budget.UpdateBudgetHandler;
+import controller.common.ValidCategoriesHandler;
 
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
@@ -22,7 +27,7 @@ public class ServerApp {
         // Create server on port 8000
         HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
 
-        // Register test endpoint
+        // Register test end point
         server.createContext("/test", new TestHandler());
         
         
@@ -49,20 +54,35 @@ public class ServerApp {
         server.createContext("/analytics/top-categories", new TopCategoriesHandler());
         server.createContext("/analytics/summary", new SpendingSummaryHandler());
         server.createContext("/analytics/budget-utilization", new BudgetUtilizationHandler());
+        
+        
+        //**********************common categories validation mapping
+        server.createContext("/analytics/categories", new ValidCategoriesHandler());
+        
+        //*******************budget service mapping 
+        server.createContext("/budget/add", new AddBudgetHandler());
+        server.createContext("/budget/update", new UpdateBudgetHandler());
+        server.createContext("/budget/delete", new DeleteBudgetHandler());
+        server.createContext("/budget/user", new GetBudgetsByUserHandler());
+
 
         // Use fixed thread pool
         server.setExecutor(Executors.newFixedThreadPool(10));
+        
+        
+    
+
 
         // Start server
         server.start();
-        System.out.println("🚀 Server is running on port 8000");
+        System.out.println("Server is running on port 8000");
     }
 
     // Custom test handler
     static class TestHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-            String response = "✅ Hello! This is a response from your test endpoint.";
+            String response = " Hello! This is a response from your test endpoint.";
             exchange.sendResponseHeaders(200, response.length());
             OutputStream os = exchange.getResponseBody();
             os.write(response.getBytes());
