@@ -128,7 +128,7 @@ public class TransactionService {
 	
 
 	    if (userId <= 0) {
-	        return new ValidationResult(false, "Invalid or missing userId");
+	        return new ValidationResult(false, "Invalid user Id or missing ");
 	    }
 	    
 

@@ -3,6 +3,8 @@ package controller;
 import com.sun.net.httpserver.HttpServer;
 
 import controller.analytics.BudgetUtilizationHandler;
+import controller.analytics.MaxMinSpendingDaysHandler;
+import controller.analytics.PrefixSumSpendingHandler;
 import controller.analytics.SpendingSummaryHandler;
 import controller.analytics.TopCategoriesHandler;
 import controller.batch.AddTransactionsBatchHandler;
@@ -10,8 +12,12 @@ import controller.batch.DeleteTransactionsBatchHandler;
 import controller.batch.GetBudgetsByUserHandler;
 import controller.batch.UpdateTransactionsBatchHandler;
 import controller.budget.AddBudgetHandler;
+import controller.budget.AddBudgetsBatchHandler;
 import controller.budget.DeleteBudgetHandler;
+import controller.budget.DeleteBudgetsBatchHandler;
+import controller.budget.GetBudgetsHandler;
 import controller.budget.UpdateBudgetHandler;
+import controller.budget.UpdateBudgetsBatchHandler;
 import controller.common.ValidCategoriesHandler;
 
 import com.sun.net.httpserver.HttpHandler;
@@ -54,6 +60,9 @@ public class ServerApp {
         server.createContext("/analytics/top-categories", new TopCategoriesHandler());
         server.createContext("/analytics/summary", new SpendingSummaryHandler());
         server.createContext("/analytics/budget-utilization", new BudgetUtilizationHandler());
+        server.createContext("/analytics/prefix-sum", new PrefixSumSpendingHandler());
+        server.createContext("/analytics/max-min-days", new MaxMinSpendingDaysHandler());
+
         
         
         //**********************common categories validation mapping
@@ -64,6 +73,15 @@ public class ServerApp {
         server.createContext("/budget/update", new UpdateBudgetHandler());
         server.createContext("/budget/delete", new DeleteBudgetHandler());
         server.createContext("/budget/user", new GetBudgetsByUserHandler());
+        server.createContext("/budget/all", new GetBudgetsHandler());
+        
+        //*******************budget batch functionality 
+        server.createContext("/budget/batch-add", new AddBudgetsBatchHandler());
+        server.createContext("/budget/batch-update", new UpdateBudgetsBatchHandler());
+       
+        server.createContext("/budget/batch-delete", new DeleteBudgetsBatchHandler());
+       
+
 
 
         // Use fixed thread pool

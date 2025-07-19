@@ -156,7 +156,90 @@ public class BudgetDAO {
 		    return budgets;
 		}
 
+	  //*********************************************************Batch Operations
+	  
+	  //batch operation for insertion 
+	  public static boolean insertMultipleBudgets(List<Budget> budgets) {
+		    String sql = "INSERT INTO budgets (user_id, category, amount) VALUES (?, ?, ?)";
+
+		    try (Connection conn = DBConnection.getConnection();
+		         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+		        conn.setAutoCommit(false);
+
+		        for (Budget budget : budgets) {
+		            stmt.setInt(1, budget.getUserId());
+		            stmt.setString(2, budget.getCategory().toLowerCase());
+		            stmt.setDouble(3, budget.getAmount());
+		            stmt.addBatch();
+		        }
+
+		        stmt.executeBatch();
+		        conn.commit();
+		        return true;
+
+		    } catch (SQLException e) {
+		        e.printStackTrace();
+		        return false;
+		    }
+		}
+	  
+	  //batch operation for update 
+	  
+	  public static boolean updateBudgetsBatch(List<Budget> budgets) {
+		    String sql = "UPDATE budgets SET amount = ? WHERE user_id = ? AND LOWER(category) = ?";
+
+		    try (Connection conn = DBConnection.getConnection();
+		         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+		        conn.setAutoCommit(false);  // Start transaction
+
+		        for (Budget b : budgets) {
+		            stmt.setDouble(1, b.getAmount());
+		            stmt.setInt(2, b.getUserId());
+		            stmt.setString(3, b.getCategory().toLowerCase());
+		            stmt.addBatch();
+		        }
+
+		        stmt.executeBatch();
+		        conn.commit();  // Commit all updates
+		        return true;
+
+		    } catch (SQLException e) {
+		        e.printStackTrace();
+		        return false;
+		    }
+		}
+
+	  // batch operation for delete 
+	  public static boolean deleteBudgetsBatch(int userId, List<String> categories) {
+		    if (categories == null || categories.isEmpty()) return false;
+
+		    String sql = "DELETE FROM budgets WHERE user_id = ? AND LOWER(category) = ?";
+
+		    try (Connection conn = DBConnection.getConnection();
+		         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+		        conn.setAutoCommit(false);
+
+		        for (String category : categories) {
+		            stmt.setInt(1, userId);
+		            stmt.setString(2, category.toLowerCase());
+		            stmt.addBatch();
+		        }
+
+		        stmt.executeBatch();
+		        conn.commit();
+		        return true;
+
+		    } catch (Exception e) {
+		        e.printStackTrace();
+		        return false;
+		    }
+		}
 
 
+	  
+	  
 	
 }

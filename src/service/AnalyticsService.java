@@ -1,9 +1,12 @@
 package service;
 
+import java.time.LocalDate;
+import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import dao.BudgetDAO;
@@ -11,6 +14,7 @@ import dao.TransactionDAO;
 import model.AnalyticsResponse;
 import model.BudgetUtilization;
 import model.CategoryTotal;
+import model.DateCumulativeSpending;
 import model.TimePeriodSpending;
 import model.Transaction;
 import model.ValidationResult;
@@ -182,6 +186,105 @@ public class AnalyticsService {
 
 	    return new AnalyticsResponse<>(true, "Budget utilization summary retrieved.", result);
 	}
+
+	
+
+	public static AnalyticsResponse<List<DateCumulativeSpending>> getPrefixSumSpending(int userId, String type) {
+	    // ✅ Validate user and transactions
+	    ValidationResult validation = validateUserAnalyticsAccess(userId);
+	    if (!validation.isValid()) {
+	        return new AnalyticsResponse<>(false, validation.getMessage(), new ArrayList<>());
+	    }
+
+	    // ✅ Validate type
+	    if (!type.equalsIgnoreCase("daily") && !type.equalsIgnoreCase("weekly")) {
+	        return new AnalyticsResponse<>(false, "Invalid type. Use 'daily' or 'weekly'.", new ArrayList<>());
+	    }
+
+	    // ✅ Fetch transactions (already filtered for expense + sorted by date ASC)
+	    List<Transaction> expenses = TransactionDAO.getExpenseTransactionsByUser(userId);
+	    
+	    System.out.println("Expense transactions for user " + userId + ":");
+	    expenses.forEach(tx -> System.out.println(tx.getUserId() + " | " + tx.getDate() + " | " + tx.getAmount()));
+
+	    if (expenses.isEmpty()) {
+	        return new AnalyticsResponse<>(false, "No expense transactions found.", new ArrayList<>());
+	    }
+
+	    // ✅ Group by date or week
+	    TreeMap<String, Double> grouped = new TreeMap<>();
+
+	    for (Transaction tx : expenses) {
+	        LocalDate date = tx.getDate().toLocalDate();
+	        String key;
+
+	        if ("daily".equalsIgnoreCase(type)) {
+	            key = date.toString(); // Exact day
+	        } else {
+	            WeekFields weekFields = WeekFields.ISO;
+	            LocalDate monday = date.with(weekFields.dayOfWeek(), 1); // ISO week starts Monday
+	            key = monday.toString();
+	        }
+
+	        grouped.put(key, grouped.getOrDefault(key, 0.0) + tx.getAmount());
+	    }
+
+	    // ✅ Compute prefix sum
+	    double runningTotal = 0.0;
+	    List<DateCumulativeSpending> result = new ArrayList<>();
+
+	    for (Map.Entry<String, Double> entry : grouped.entrySet()) {
+	        runningTotal += entry.getValue();
+	        result.add(new DateCumulativeSpending(entry.getKey(), runningTotal));
+	    }
+
+	    String msg = "Prefix sum (" + type + ") spending data retrieved successfully.";
+	    return new AnalyticsResponse<>(true, msg, result);
+	}
+	
+	// get minimum and max spending days
+	public static AnalyticsResponse<Map<String, DateCumulativeSpending>> getMaxMinSpendingDays(int userId){
+	    ValidationResult validation = validateUserAnalyticsAccess(userId);
+	    if (!validation.isValid()) {
+	        return new AnalyticsResponse<>(false, validation.getMessage(), new HashMap<>());
+	    }
+
+	    List<Transaction> expenses = TransactionDAO.getExpenseTransactionsByUser(userId);
+	    if (expenses.isEmpty()) {
+	        return new AnalyticsResponse<>(false, "No expense transactions found.", new HashMap<>());
+	    }
+
+	    // Group expenses by date
+	    Map<String, Double> spendingPerDay = new HashMap<>();
+	    for (Transaction tx : expenses) {
+	        String date = tx.getDate().toLocalDate().toString();
+	        spendingPerDay.put(date, spendingPerDay.getOrDefault(date, 0.0) + tx.getAmount());
+	    }
+
+	    // Find max and min
+	    String maxDate = null, minDate = null;
+	    double maxAmount = -Double.MIN_VALUE;
+	    double minAmount = Double.MAX_VALUE;
+
+	    for (Map.Entry<String, Double> entry : spendingPerDay.entrySet()) {
+	        double amount = entry.getValue();
+	        if (amount > maxAmount) {
+	            maxAmount = amount;
+	            maxDate = entry.getKey();
+	        }
+	        if (amount < minAmount) {
+	            minAmount = amount;
+	            minDate = entry.getKey();
+	        }
+	    }
+
+	    Map<String, DateCumulativeSpending> result = new HashMap<>();
+	    result.put("max", new DateCumulativeSpending(maxDate, maxAmount));
+	    result.put("min", new DateCumulativeSpending(minDate, minAmount));
+
+	    return new AnalyticsResponse<>(true, "Max and Min spending days retrieved.", result);
+	}
+
 
 
 }

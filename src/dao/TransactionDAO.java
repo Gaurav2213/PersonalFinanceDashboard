@@ -193,6 +193,37 @@ public class TransactionDAO {
             return false;
         }
     }
+    
+    //filter and sort the expense type transactions 
+    public static List<Transaction> getExpenseTransactionsByUser(int userId) {
+        List<Transaction> expenses = new ArrayList<>();
+        String sql = "SELECT * FROM transactions WHERE user_id = ? AND LOWER(type) = 'expense' ORDER BY date ASC";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Transaction tx = new Transaction(
+                    rs.getInt("id"),
+                    rs.getInt("user_id"),
+                    rs.getString("type"),
+                    rs.getDouble("amount"),
+                    rs.getString("category"),
+                    rs.getString("description"),
+                    rs.getDate("date")
+                );
+                expenses.add(tx);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return expenses;
+    }
 
     
     //batch operations ******************************************************************
@@ -280,6 +311,9 @@ public class TransactionDAO {
             return false;
         }
     }
+    
+
+
 
 
 

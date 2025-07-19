@@ -1,5 +1,14 @@
 package util;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
@@ -7,12 +16,6 @@ import com.sun.net.httpserver.HttpExchange;
 import model.Transaction;
 import model.ValidationResult;
 
-import java.io.*;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class Utils {
 
@@ -87,7 +90,7 @@ public class Utils {
     
     public static void sendJsonResponse(HttpExchange exchange, Object data, int statusCode) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        String json = mapper.writeValueAsString(data);  // 🧠 Serializes your List<> or DTO
+        String json = mapper.writeValueAsString(data);  //  Serializes your List<> or DTO
 
         byte[] responseBytes = json.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "application/json");
