@@ -3,8 +3,11 @@ package controller;
 import com.sun.net.httpserver.HttpServer;
 
 import controller.analytics.BudgetUtilizationHandler;
+import controller.analytics.CategoryTrendHandler;
 import controller.analytics.MaxMinSpendingDaysHandler;
+import controller.analytics.OverspendWarningHandler;
 import controller.analytics.PrefixSumSpendingHandler;
+import controller.analytics.RecurringTransactionHandler;
 import controller.analytics.SpendingSummaryHandler;
 import controller.analytics.TopCategoriesHandler;
 import controller.batch.AddTransactionsBatchHandler;
@@ -62,6 +65,10 @@ public class ServerApp {
         server.createContext("/analytics/budget-utilization", new BudgetUtilizationHandler());
         server.createContext("/analytics/prefix-sum", new PrefixSumSpendingHandler());
         server.createContext("/analytics/max-min-days", new MaxMinSpendingDaysHandler());
+        server.createContext("/analytics/category-trend", new CategoryTrendHandler());
+        server.createContext("/analytics/recurring", new RecurringTransactionHandler());
+        server.createContext("/analytics/overspend-warnings", new OverspendWarningHandler());
+
 
         
         
@@ -80,6 +87,7 @@ public class ServerApp {
         server.createContext("/budget/batch-update", new UpdateBudgetsBatchHandler());
        
         server.createContext("/budget/batch-delete", new DeleteBudgetsBatchHandler());
+
        
 
 

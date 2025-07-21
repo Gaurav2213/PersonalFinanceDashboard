@@ -19,7 +19,7 @@ public class ValidCategoriesHandler implements HttpHandler {
 
         List<String> categories = Arrays.asList(
             "food", "transport", "utilities", "shopping",
-            "health", "salary", "entertainment", "other"
+            "health", "salary", "entertainment", "other","rent"
         );
 
         Utils.sendJsonResponse(exchange, categories, 200);

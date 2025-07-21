@@ -3,6 +3,7 @@ package service;
 import java.time.LocalDate;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +15,10 @@ import dao.TransactionDAO;
 import model.AnalyticsResponse;
 import model.BudgetUtilization;
 import model.CategoryTotal;
+import model.CategoryTrend;
 import model.DateCumulativeSpending;
+import model.OverspendWarning;
+import model.RecurringTransaction;
 import model.TimePeriodSpending;
 import model.Transaction;
 import model.ValidationResult;
@@ -285,6 +289,125 @@ public class AnalyticsService {
 	    return new AnalyticsResponse<>(true, "Max and Min spending days retrieved.", result);
 	}
 
+	
+	//compute  category based trend  on the basis of months
+	public static AnalyticsResponse<List<CategoryTrend>> getCategoryTrendOverTime(int userId) {
+	    // ✅ Validate user and transactions
+	    ValidationResult validation = validateUserAnalyticsAccess(userId);
+	    if (!validation.isValid()) {
+	        return new AnalyticsResponse<>(false, validation.getMessage(), new ArrayList<>());
+	    }
+
+	    List<Transaction> expenses = TransactionDAO.getExpenseTransactionsByUser(userId);
+
+	    if (expenses.isEmpty()) {
+	        return new AnalyticsResponse<>(false, "No expense transactions found.", new ArrayList<>());
+	    }
+
+	    // ✅ Group by month-year and then by category
+	    Map<String, Map<String, Double>> monthCategoryMap = new TreeMap<>(); // Sorted by month
+
+	    for (Transaction tx : expenses) {
+	        String month = tx.getDate().toLocalDate().getYear() + "-" +
+	                       String.format("%02d", tx.getDate().toLocalDate().getMonthValue());
+	        String category = tx.getCategory().toLowerCase();
+	        double amount = tx.getAmount();
+
+	        monthCategoryMap
+	            .computeIfAbsent(month, k -> new HashMap<>())
+	            .merge(category, amount, Double::sum);
+	    }
+
+	    // ✅ Convert to response objects
+	    List<CategoryTrend> result = new ArrayList<>();
+	    for (Map.Entry<String, Map<String, Double>> entry : monthCategoryMap.entrySet()) {
+	        result.add(new CategoryTrend(entry.getKey(), entry.getValue()));
+	    }
+
+	    return new AnalyticsResponse<>(true, "Category trend over time retrieved.", result);
+	}
+
+//recurring dates detector 
+	
+	public static AnalyticsResponse<List<RecurringTransaction>> detectRecurringTransactions(int userId) {
+	    ValidationResult validation = validateUserAnalyticsAccess(userId);
+	    if (!validation.isValid()) {
+	        return new AnalyticsResponse<>(false, validation.getMessage(), new ArrayList<>());
+	    }
+
+	    List<Transaction> expenses = TransactionDAO.getExpenseTransactionsByUser(userId);
+	    if (expenses.isEmpty()) {
+	        return new AnalyticsResponse<>(false, "No expense transactions found.", new ArrayList<>());
+	    }
+
+	    // Group by category and amount range (±10%)
+	    Map<String, List<Transaction>> grouped = new HashMap<>();
+	    for (Transaction tx : expenses) {
+	        String key = tx.getCategory().toLowerCase() + "-" + Math.round(tx.getAmount() / 10.0); // group by rounded bucket
+	        grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(tx);
+	    }
+
+	    List<RecurringTransaction> recurringList = new ArrayList<>();
+
+	    //here we are considering if they are recurring transaction or not 
+	    for (Map.Entry<String, List<Transaction>> entry : grouped.entrySet()) {
+	        List<Transaction> txs = entry.getValue();
+	        if (txs.size() < 3) continue; // require at least 3 similar transactions
+
+	        // Sort by date and check intervals
+	        txs.sort(Comparator.comparing(Transaction::getDate));
+	        List<String> recurringDates = new ArrayList<>();
+	        for (Transaction tx : txs) {
+	            recurringDates.add(tx.getDate().toString());
+	        }
+
+	        Transaction sample = txs.get(0);
+	        recurringList.add(new RecurringTransaction(sample.getCategory(), sample.getAmount(), recurringDates));
+	    }
+	    
+	    if (recurringList.isEmpty()) {
+	        return new AnalyticsResponse<>(true, "No recurring transactions found.", recurringList);
+	    }
+
+	    return new AnalyticsResponse<>(true, "Recurring transactions detected.", recurringList);
+	}
+
+	// get warning alerts based on spending per category  corresponding to budget 
+	public static AnalyticsResponse<List<OverspendWarning>> getOverspendWarnings(int userId) {
+	    AnalyticsResponse<List<BudgetUtilization>> utilizationResponse = getBudgetUtilization(userId);
+
+	    if (!utilizationResponse.isSuccess()) {
+	        return new AnalyticsResponse<>(false, utilizationResponse.getMessage(), new ArrayList<>());
+	    }
+
+	    List<OverspendWarning> warnings = new ArrayList<>();
+
+	    for (BudgetUtilization item : utilizationResponse.getData()) {
+	        if (item.getPercentUsed() > 100.0) {
+	            warnings.add(new OverspendWarning(
+	                item.getCategory(),
+	                item.getBudget(),
+	                item.getSpent(),
+	                item.getPercentUsed(),
+	                "Overspent"
+	            ));
+	        } else if (item.getPercentUsed() >= 80.0) {
+	            warnings.add(new OverspendWarning(
+	                item.getCategory(),
+	                item.getBudget(),
+	                item.getSpent(),
+	                item.getPercentUsed(),
+	                "Nearing Limit"
+	            ));
+	        }
+	    }
+
+	    if (warnings.isEmpty()) {
+	        return new AnalyticsResponse<>(true, "No overspending or warning detected.", warnings);
+	    }
+
+	    return new AnalyticsResponse<>(true, "Overspending warnings retrieved.", warnings);
+	}
 
 
 }
