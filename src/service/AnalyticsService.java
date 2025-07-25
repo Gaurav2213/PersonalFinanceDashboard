@@ -19,6 +19,7 @@ import model.CategoryTrend;
 import model.DateCumulativeSpending;
 import model.OverspendWarning;
 import model.RecurringTransaction;
+import model.SpendingDistribution;
 import model.TimePeriodSpending;
 import model.Transaction;
 import model.ValidationResult;
@@ -408,6 +409,111 @@ public class AnalyticsService {
 
 	    return new AnalyticsResponse<>(true, "Overspending warnings retrieved.", warnings);
 	}
+	
+	//filter the transaction based on type of transaction min and max amount and keyword basis
+	public static AnalyticsResponse<List<Transaction>> filterTransactions(
+	        int userId, Double min, Double max, String keyword, String type) {
+
+	    // ✅ Validate user
+	    ValidationResult validation = AnalyticsService.validateUserAnalyticsAccess(userId);
+	    if (!validation.isValid()) {
+	        return new AnalyticsResponse<>(false, validation.getMessage(), new ArrayList<>());
+	    }
+	    
+
+	    // ✅ Validate transaction type
+	    if (type != null && !type.isBlank()) {
+	        String t = type.trim().toLowerCase();
+	        if (!t.equals("income") && !t.equals("expense")) {
+	            return new AnalyticsResponse<>(false, "Invalid transaction type. Must be 'income' or 'expense'.", new ArrayList<>());
+	        }
+	    }
+
+	    // ✅ Validate amount range
+	    if (min < 0 || max< 0) {
+	        return new AnalyticsResponse<>(false, "Amounts cannot be negative.", new ArrayList<>());
+	    }
+
+	    if (min> max) {
+	        return new AnalyticsResponse<>(false, "Minimum amount cannot be greater than maximum amount.", new ArrayList<>());
+	    }
+
+	    // ✅ Fetch all transactions
+	    List<Transaction> all = TransactionDAO.getTransactionsByUserId(userId);
+
+	    // ✅ Apply filters
+	    List<Transaction> filtered = all.stream()
+	            .filter(tx -> {
+	                // Type check
+	                if (type != null && !type.isBlank() && !tx.getType().equalsIgnoreCase(type)) {
+	                    return false;
+	                }
+
+	                // Keyword match in category or description
+	                if (keyword != null && !keyword.isBlank()) {
+	                    String kw = keyword.toLowerCase();
+	                    if (!tx.getCategory().toLowerCase().contains(kw) &&
+	                        !tx.getDescription().toLowerCase().contains(kw)) {
+	                        return false;
+	                    }
+	                }
+
+	                // Min & max amount check
+	                if (min != null && tx.getAmount() < min) return false;
+	                if (max != null && tx.getAmount() > max) return false;
+
+	                return true;
+	            })
+	            .collect(Collectors.toList());
+
+	    if (filtered.isEmpty()) {
+	        return new AnalyticsResponse<>(false, "No matching transactions found.", new ArrayList<>());
+	    }
+
+	    return new AnalyticsResponse<>(true, "Filtered transactions retrieved successfully.", filtered);
+	}
+	
+	
+	
+	//get spending and earning based on the user 
+	public static AnalyticsResponse<SpendingDistribution> getSpendingDistribution(int userId) {
+	    // ✅ Validate user and transaction existence
+	    ValidationResult validation = validateUserAnalyticsAccess(userId);
+	    if (!validation.isValid()) {
+	        return new AnalyticsResponse<>(false, validation.getMessage(), null);
+	    }
+
+	    // ✅ Fetch all transactions
+	    List<Transaction> transactions = TransactionDAO.getTransactionsByUserId(userId);
+
+	    double totalIncome = 0.0;
+	    double totalExpense = 0.0;
+
+	    // ✅ Separate totals
+	    for (Transaction tx : transactions) {
+	        if ("income".equalsIgnoreCase(tx.getType())) {
+	            totalIncome += tx.getAmount();
+	        } else if ("expense".equalsIgnoreCase(tx.getType())) {
+	            totalExpense += tx.getAmount();
+	        }
+	    }
+
+	    double total = totalIncome + totalExpense;
+
+	    if (total == 0) {
+	        return new AnalyticsResponse<>(false, "No income or expense transactions found.", null);
+	    }
+
+	    double incomePercentage = (totalIncome / total) * 100;
+	    double expensePercentage = (totalExpense / total) * 100;
+
+	    SpendingDistribution result = new SpendingDistribution(
+	        totalIncome, totalExpense, incomePercentage, expensePercentage
+	    );
+
+	    return new AnalyticsResponse<>(true, "Spending distribution retrieved successfully.", result);
+	}
+
 
 
 }

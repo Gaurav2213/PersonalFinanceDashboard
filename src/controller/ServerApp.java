@@ -4,10 +4,12 @@ import com.sun.net.httpserver.HttpServer;
 
 import controller.analytics.BudgetUtilizationHandler;
 import controller.analytics.CategoryTrendHandler;
+import controller.analytics.FilteredTransactionsHandler;
 import controller.analytics.MaxMinSpendingDaysHandler;
 import controller.analytics.OverspendWarningHandler;
 import controller.analytics.PrefixSumSpendingHandler;
 import controller.analytics.RecurringTransactionHandler;
+import controller.analytics.SpendingDistributionHandler;
 import controller.analytics.SpendingSummaryHandler;
 import controller.analytics.TopCategoriesHandler;
 import controller.batch.AddTransactionsBatchHandler;
@@ -68,7 +70,10 @@ public class ServerApp {
         server.createContext("/analytics/category-trend", new CategoryTrendHandler());
         server.createContext("/analytics/recurring", new RecurringTransactionHandler());
         server.createContext("/analytics/overspend-warnings", new OverspendWarningHandler());
+        server.createContext("/analytics/filter", new FilteredTransactionsHandler());
+        server.createContext("/analytics/spending-distribution", new SpendingDistributionHandler());
 
+       
 
         
         
