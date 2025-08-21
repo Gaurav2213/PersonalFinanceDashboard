@@ -1,26 +1,28 @@
-
 package util;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SessionManager {
-    // token -> expiryMillis
+    // jti -> expiryMillis
     private static final Map<String, Long> BLACKLIST = new ConcurrentHashMap<>();
 
-    //used to blacklist the token 
-    public static void blacklist(String token, long expMillis) {
-        BLACKLIST.put(token, expMillis);
+    public static void blacklist(String jti, long expMillis) {
+        if (jti == null) return; // defensive
+        BLACKLIST.put(jti, expMillis);
     }
 
-    //used to validate the token if expired or not 
-    public static boolean isBlacklisted(String token) {
-        Long exp = BLACKLIST.get(token);
+    public static boolean isBlacklisted(String jti) {
+        if (jti == null) return false;
+        Long exp = BLACKLIST.get(jti);
         if (exp == null) return false;
-        if (System.currentTimeMillis() > exp) { // cleanup after expiry
-            BLACKLIST.remove(token);
+
+        long now = System.currentTimeMillis();
+        if (now > exp) {            // expired entry -> cleanup
+            BLACKLIST.remove(jti);
             return false;
         }
         return true;
     }
 }
+

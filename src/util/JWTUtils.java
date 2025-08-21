@@ -9,6 +9,7 @@ import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 
 public class JWTUtils {
     // Option A: base64-encoded secret (recommended)
@@ -31,10 +32,13 @@ public class JWTUtils {
     }
 
     public static String generateToken(int userId, String email) {
-        long expirationMs = 24L * 60 * 60 * 1000; // 24h
+        long expirationMs = 60 * 60 * 1000; // 1h
+        String jti = UUID.randomUUID().toString();
+  
         return Jwts.builder()
             .setSubject(String.valueOf(userId))
             .claim("email", email)
+            .setId(jti)  
             .setIssuedAt(new Date())
             .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
             .signWith(key(), SignatureAlgorithm.HS256)

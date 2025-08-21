@@ -11,6 +11,7 @@ import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.Headers;
 
 import model.Transaction;
 import model.ValidationResult;
@@ -99,6 +100,13 @@ public class Utils {
         os.write(responseBytes);
         os.close();
     }
+    
+    public static void addCorsHeaders(Headers headers) {
+        headers.add("Access-Control-Allow-Origin",  "*"); // TODO: restrict to your frontend domain in prod
+        headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        headers.add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        headers.add("Access-Control-Expose-Headers", "Content-Type");
+      }
 
 
 }

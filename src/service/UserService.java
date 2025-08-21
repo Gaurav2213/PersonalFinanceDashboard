@@ -3,6 +3,7 @@ package service;
 import java.sql.Timestamp;
 
 import dao.UserDAO;
+import io.jsonwebtoken.Claims;
 import model.AuthResponse;
 import model.LoginResponse;
 import model.User;
@@ -10,6 +11,7 @@ import model.ValidationResult;
 import util.EmailService;
 import util.JWTUtils;
 import util.PasswordUtils;
+import util.SessionManager;
 import util.TokenUtils;
 
 public class UserService {
@@ -162,6 +164,24 @@ public class UserService {
 	    return new AuthResponse<>(true, "Login successful", loginResponse);
 	}
 	
+	// service/UserService.java (snippet)
+	public AuthResponse<Object> logout(String token) {
+	    try {
+	        Claims claims = JWTUtils.parseClaims(token); // verifies signature
+	        long expMillis = claims.getExpiration().getTime();
+	        String jti = claims.getId(); // may be null if you didn't set it at issue time
+
+	        if (jti == null || jti.isEmpty()) {
+	            // Fallback: blacklist a stable hash of the token (rarely needed if you set jti)
+	            jti = Integer.toHexString(token.hashCode());
+	        }
+
+	        SessionManager.blacklist(jti, expMillis);
+	        return new AuthResponse<>(true, "Logged out successfully");
+	    } catch (Exception e) {
+	        return new AuthResponse<>(false, "Invalid token");
+	    }
+	}
 
 
 }

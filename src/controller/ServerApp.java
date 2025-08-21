@@ -33,78 +33,89 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
+import util.Guarded;
+
 public class ServerApp {
     public static void main(String[] args) throws IOException {
         // Create server on port 8000
         HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
 
-        // Register test end point
+        // Register test end point (PUBLIC)
         server.createContext("/test", new TestHandler());
-        
-        
-        //*****************users controller mapping
+
+        //*****************users controller mapping (PUBLIC)
         server.createContext("/register", new RegisterHandler());
         server.createContext("/login", new LoginHandler());
         server.createContext("/verify-email", new VerifyEmailHandler());
 
-        
-        
-        //******************single operation mapping
-        server.createContext("/transaction/add",new AddTransactionHandler());
-        server.createContext("/transaction/all", new GetAllTransactionsHandler());
-        server.createContext("/transaction/category", new GetTransactionsByCategoryHandler());
-        server.createContext("/transaction/update", new UpdateTransactionHandler());
-        server.createContext("/transaction/delete", new DeleteTransactionHandler());
-        
-        
-        //*********************batch operation mapping 
-        server.createContext("/transactions/batch-add", new AddTransactionsBatchHandler());
-        server.createContext("/transactions/batch-update", new UpdateTransactionsBatchHandler());
-        server.createContext("/transactions/batch-delete", new DeleteTransactionsBatchHandler());
-        
+        //******************single operation mapping (PROTECTED)
+        server.createContext("/transaction/add",
+            Guarded.protect((exchange, claims) -> new AddTransactionHandler().handle(exchange)));
+        server.createContext("/transaction/all",
+            Guarded.protect((exchange, claims) -> new GetAllTransactionsHandler().handle(exchange)));
+        server.createContext("/transaction/category",
+            Guarded.protect((exchange, claims) -> new GetTransactionsByCategoryHandler().handle(exchange)));
+        server.createContext("/transaction/update",
+            Guarded.protect((exchange, claims) -> new UpdateTransactionHandler().handle(exchange)));
+        server.createContext("/transaction/delete",
+            Guarded.protect((exchange, claims) -> new DeleteTransactionHandler().handle(exchange)));
 
-        //************* analytics service mapping
-        server.createContext("/analytics/top-categories", new TopCategoriesHandler());
-        server.createContext("/analytics/summary", new SpendingSummaryHandler());
-        server.createContext("/analytics/budget-utilization", new BudgetUtilizationHandler());
-        server.createContext("/analytics/prefix-sum", new PrefixSumSpendingHandler());
-        server.createContext("/analytics/max-min-days", new MaxMinSpendingDaysHandler());
-        server.createContext("/analytics/category-trend", new CategoryTrendHandler());
-        server.createContext("/analytics/recurring", new RecurringTransactionHandler());
-        server.createContext("/analytics/overspend-warnings", new OverspendWarningHandler());
-        server.createContext("/analytics/filter", new FilteredTransactionsHandler());
-        server.createContext("/analytics/spending-distribution", new SpendingDistributionHandler());
+        //*********************batch operation mapping (PROTECTED)
+        server.createContext("/transactions/batch-add",
+            Guarded.protect((exchange, claims) -> new AddTransactionsBatchHandler().handle(exchange)));
+        server.createContext("/transactions/batch-update",
+            Guarded.protect((exchange, claims) -> new UpdateTransactionsBatchHandler().handle(exchange)));
+        server.createContext("/transactions/batch-delete",
+            Guarded.protect((exchange, claims) -> new DeleteTransactionsBatchHandler().handle(exchange)));
 
-       
+        //************* analytics service mapping (PROTECTED)
+        server.createContext("/analytics/top-categories",
+            Guarded.protect((exchange, claims) -> new TopCategoriesHandler().handle(exchange)));
+        server.createContext("/analytics/summary",
+            Guarded.protect((exchange, claims) -> new SpendingSummaryHandler().handle(exchange)));
+        server.createContext("/analytics/budget-utilization",
+            Guarded.protect((exchange, claims) -> new BudgetUtilizationHandler().handle(exchange)));
+        server.createContext("/analytics/prefix-sum",
+            Guarded.protect((exchange, claims) -> new PrefixSumSpendingHandler().handle(exchange)));
+        server.createContext("/analytics/max-min-days",
+            Guarded.protect((exchange, claims) -> new MaxMinSpendingDaysHandler().handle(exchange)));
+        server.createContext("/analytics/category-trend",
+            Guarded.protect((exchange, claims) -> new CategoryTrendHandler().handle(exchange)));
+        server.createContext("/analytics/recurring",
+            Guarded.protect((exchange, claims) -> new RecurringTransactionHandler().handle(exchange)));
+        server.createContext("/analytics/overspend-warnings",
+            Guarded.protect((exchange, claims) -> new OverspendWarningHandler().handle(exchange)));
+        server.createContext("/analytics/filter",
+            Guarded.protect((exchange, claims) -> new FilteredTransactionsHandler().handle(exchange)));
+        server.createContext("/analytics/spending-distribution",
+            Guarded.protect((exchange, claims) -> new SpendingDistributionHandler().handle(exchange)));
 
-        
-        
-        //**********************common categories validation mapping
-        server.createContext("/analytics/categories", new ValidCategoriesHandler());
-        
-        //*******************budget service mapping 
-        server.createContext("/budget/add", new AddBudgetHandler());
-        server.createContext("/budget/update", new UpdateBudgetHandler());
-        server.createContext("/budget/delete", new DeleteBudgetHandler());
-        server.createContext("/budget/user", new GetBudgetsByUserHandler());
-        server.createContext("/budget/all", new GetBudgetsHandler());
-        
-        //*******************budget batch functionality 
-        server.createContext("/budget/batch-add", new AddBudgetsBatchHandler());
-        server.createContext("/budget/batch-update", new UpdateBudgetsBatchHandler());
-       
-        server.createContext("/budget/batch-delete", new DeleteBudgetsBatchHandler());
+        //**********************common categories validation mapping (PROTECTED)
+        server.createContext("/analytics/categories",
+            Guarded.protect((exchange, claims) -> new ValidCategoriesHandler().handle(exchange)));
 
-       
+        //*******************budget service mapping (PROTECTED)
+        server.createContext("/budget/add",
+            Guarded.protect((exchange, claims) -> new AddBudgetHandler().handle(exchange)));
+        server.createContext("/budget/update",
+            Guarded.protect((exchange, claims) -> new UpdateBudgetHandler().handle(exchange)));
+        server.createContext("/budget/delete",
+            Guarded.protect((exchange, claims) -> new DeleteBudgetHandler().handle(exchange)));
+        server.createContext("/budget/user",
+            Guarded.protect((exchange, claims) -> new GetBudgetsByUserHandler().handle(exchange)));
+        server.createContext("/budget/all",
+            Guarded.protect((exchange, claims) -> new GetBudgetsHandler().handle(exchange)));
 
-
+        //*******************budget batch functionality (PROTECTED)
+        server.createContext("/budget/batch-add",
+            Guarded.protect((exchange, claims) -> new AddBudgetsBatchHandler().handle(exchange)));
+        server.createContext("/budget/batch-update",
+            Guarded.protect((exchange, claims) -> new UpdateBudgetsBatchHandler().handle(exchange)));
+        server.createContext("/budget/batch-delete",
+            Guarded.protect((exchange, claims) -> new DeleteBudgetsBatchHandler().handle(exchange)));
 
         // Use fixed thread pool
         server.setExecutor(Executors.newFixedThreadPool(10));
-        
-        
-    
-
 
         // Start server
         server.start();

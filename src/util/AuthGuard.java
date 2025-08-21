@@ -3,27 +3,30 @@ package util;
 
 import com.sun.net.httpserver.HttpExchange;
 import io.jsonwebtoken.Claims;
-
 import java.io.IOException;
 
 public class AuthGuard {
 
-    // Extract token from "Authorization: Bearer <token>"
     public static String extractBearerToken(HttpExchange exchange) {
         String h = exchange.getRequestHeaders().getFirst("Authorization");
         if (h == null || !h.startsWith("Bearer ")) return null;
         return h.substring("Bearer ".length()).trim();
     }
 
-    // Verify token (and not blacklisted). Returns claims if valid, else null.
+    // Returns claims if valid and not blacklisted, else null
     public static Claims verify(HttpExchange exchange) {
         String token = extractBearerToken(exchange);
         if (token == null) return null;
-        if (SessionManager.isBlacklisted(token)) return null;
 
         try {
-            Claims claims = JWTUtils.parseClaims(token);  // your 0.11.5 utils
+            // IMPORTANT: parseClaims must VERIFY signature + exp internally
+            Claims claims = JWTUtils.parseClaims(token);
             if (JWTUtils.isExpired(claims)) return null;
+
+            String jti = claims.getId(); // standard claim for token id
+            if (SessionManager.isBlacklisted(jti)) return null;
+
+
             return claims;
         } catch (Exception e) {
             return null;
