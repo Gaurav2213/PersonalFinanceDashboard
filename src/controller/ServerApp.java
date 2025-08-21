@@ -45,6 +45,8 @@ public class ServerApp {
         //*****************users controller mapping
         server.createContext("/register", new RegisterHandler());
         server.createContext("/login", new LoginHandler());
+        server.createContext("/verify-email", new VerifyEmailHandler());
+
         
         
         //******************single operation mapping

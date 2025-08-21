@@ -1,64 +1,39 @@
 package controller;
 
+import java.io.IOException;
+import java.util.Map;
+
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import model.ValidationResult;
+
+import model.AuthResponse;
+import model.LoginResponse;
 import service.UserService;
+import util.Utils;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-
-import org.json.JSONObject;
-
-/**
- * Handler to process user login via POST /login
- * Accepts email and password in JSON format
- * Returns structured feedback using ValidationResult
- */
 public class LoginHandler implements HttpHandler {
 
     private final UserService userService = new UserService();
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-
-        // Step 1: Allow only POST requests
-        if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
-            String error = "405 Method Not Allowed";
-            exchange.sendResponseHeaders(405, error.length());
-            OutputStream os = exchange.getResponseBody();
-            os.write(error.getBytes());
-            os.close();
+        if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+            Utils.sendResponse(exchange, 405, "Method Not Allowed");
             return;
         }
 
-        // Step 2: Read and parse JSON request body
-        BufferedReader reader = new BufferedReader(new InputStreamReader(exchange.getRequestBody()));
-        StringBuilder jsonBuilder = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            jsonBuilder.append(line);
+        try {
+        	
+            Map<String, Object> body = Utils.parseRequestBody(exchange.getRequestBody(), Map.class);
+            String email = body == null ? null : (String) body.get("email");
+            String password = body == null ? null : (String) body.get("password");
+
+            AuthResponse<LoginResponse> response = userService.loginUser(email, password);
+            Utils.sendJsonResponse(exchange, response, response.isSuccess() ? 200 : 401);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Utils.sendResponse(exchange, 500, "Internal Server Error: " + e.getMessage());
         }
-
-        JSONObject requestJson = new JSONObject(jsonBuilder.toString());
-        String email = requestJson.getString("email");
-        String password = requestJson.getString("password");
-
-        // Step 3: Authenticate via service layer
-        ValidationResult result = userService.loginWithValidation(email, password);
-
-        // Step 4: Build and return JSON response
-        exchange.getResponseHeaders().set("Content-Type", "application/json");
-        JSONObject responseJson = new JSONObject();
-        responseJson.put("success", result.isValid());
-        responseJson.put("message", result.getMessage());
-
-        byte[] responseBytes = responseJson.toString().getBytes();
-        exchange.sendResponseHeaders(200, responseBytes.length);
-        OutputStream os = exchange.getResponseBody();
-        os.write(responseBytes);
-        os.close();
     }
 }

@@ -1,33 +1,19 @@
 package service;
 
+import java.sql.Timestamp;
+
 import dao.UserDAO;
+import model.AuthResponse;
+import model.LoginResponse;
 import model.User;
 import model.ValidationResult;
+import util.EmailService;
+import util.JWTUtils;
+import util.PasswordUtils;
+import util.TokenUtils;
 
 public class UserService {
 	
-	// Login with validation (used by API handler)
-	public ValidationResult loginWithValidation(String email, String password) {
-	    // Validate email format and domain
-	    ValidationResult emailResult = validateEmail(email);
-	    if (!emailResult.isValid()) {
-	        return emailResult;
-	    }
-
-	    // Validate password format
-	    ValidationResult passwordResult = validatePassword(password);
-	    if (!passwordResult.isValid()) {
-	        return passwordResult;
-	    }
-
-	    // Check user existence and password match
-	    User user = UserDAO.getUserByEmail(email);
-	    if (user != null && user.getPassword().equals(password)) {
-	        return new ValidationResult(true, "Login successful");
-	    }
-
-	    return new ValidationResult(false, "Invalid email or password");
-	}
 
 	// Helper method to validate name
 	private ValidationResult validateName(String name) {
@@ -79,8 +65,25 @@ public class UserService {
 	    return new ValidationResult(false, "Email domain is not supported. Use Gmail, Yahoo, Outlook, or Hotmail.");
 	}
 
-	// Register a new user with validation
+	
+	// Reusable helper to validate login inputs
+	private AuthResponse<User> validateLoginInputs(String email, String password) {
+	    ValidationResult emailResult = validateEmail(email);
+	    if (!emailResult.isValid()) {
+	        return new AuthResponse<>(false, emailResult.getMessage());
+	    }
+
+	    ValidationResult passwordResult = validatePassword(password);
+	    if (!passwordResult.isValid()) {
+	        return new AuthResponse<>(false, passwordResult.getMessage());
+	    }
+
+	    return new AuthResponse<>(true, "Inputs are valid");
+	}
+
+	//registration method to register the user 
 	public ValidationResult register(User user) {
+	    // Step 1: Validate fields
 	    ValidationResult nameResult = validateName(user.getName());
 	    if (!nameResult.isValid()) return nameResult;
 
@@ -90,26 +93,75 @@ public class UserService {
 	    ValidationResult passwordResult = validatePassword(user.getPassword());
 	    if (!passwordResult.isValid()) return passwordResult;
 
-	    // Check for duplicate email
+	    // Step 2: Check for duplicate email
 	    if (UserDAO.getUserByEmail(user.getEmail()) != null) {
 	        return new ValidationResult(false, "Email is already registered");
 	    }
 
-	    // If everything is valid and user not registered yet
+	    // Step 3: Hash password
+	    String hashedPassword = PasswordUtils.hashPassword(user.getPassword());
+	    user.setPassword(hashedPassword);
+
+	    // Step 4: Generate email verification token and expiry
+	    String verificationToken = TokenUtils.generateToken();
+	    Timestamp expiry = TokenUtils.generateExpiry(24); // 24 hours validity
+	    user.setEmailVerificationToken(verificationToken);
+	    user.setEmailVerificationTokenExpires(expiry);
+	    user.setVerified(false); // Must verify email before access
+
+	    // Step 5: Set role and timestamps
+	    user.setRole("user");
+	    Timestamp now = new Timestamp(System.currentTimeMillis());
+	    user.setCreatedAt(now);
+	    user.setUpdatedAt(now);
+
+	    // Step 6: Insert user into DB
 	    boolean success = UserDAO.registerUser(user);
 	    if (success) {
-	        return new ValidationResult(true, "User registered successfully");
+	    	  // Trigger email sending after user is saved
+	        EmailService.sendVerificationEmail(
+	            user.getEmail(),
+	            user.getName(),
+	            user.getEmailVerificationToken()
+	        );
+
+	        // NOTE: We'll send email in next step
+	        return new ValidationResult(true, "Registration successful. Please check your email to verify your account.");
 	    } else {
 	        return new ValidationResult(false, "Registration failed. Please try again.");
 	    }
 	}
-
-	// Login with validation
-	public User login(String email, String password) {
-	    ValidationResult result = loginWithValidation(email, password);
-	    if (result.isValid()) {
-	        return UserDAO.getUserByEmail(email); // Already authenticated
+	public AuthResponse<LoginResponse> loginUser(String email, String password) {
+	    // Step 1: Validate inputs
+	    AuthResponse<User> validationResponse = validateLoginInputs(email, password);
+	    if (!validationResponse.isSuccess()) {
+	        return new AuthResponse<>(false, validationResponse.getMessage());
 	    }
-	    return null;
-}
+
+	    // Step 2: Get user
+	    User user = UserDAO.getUserByEmail(email);
+	    if (user == null) {
+	        return new AuthResponse<>(false, "User not found");
+	    }
+
+	    // Step 3: Verify password
+	    if (!PasswordUtils.verifyPassword(password, user.getPassword())) {
+	        return new AuthResponse<>(false, "Incorrect password");
+	    }
+
+	    // Step 4: Check verification status
+	    if (!user.isVerified()) {
+	        return new AuthResponse<>(false, "Please verify your email before logging in");
+	    }
+
+	    // Step 5: Generate JWT
+	    String token = JWTUtils.generateToken(user.getId(), user.getEmail());
+
+	    // Step 6: Return success response
+	    LoginResponse loginResponse = new LoginResponse(user.getId(), user.getEmail(), token);
+	    return new AuthResponse<>(true, "Login successful", loginResponse);
+	}
+	
+
+
 }

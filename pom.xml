@@ -1,0 +1,131 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.gaurav.personalfinancedashboard</groupId>
+  <artifactId>personal-finance-dashboard</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>Personal Finance Dashboard</name>
+  <description>A personal finance tracking and budgeting application built with Java and HTTPServer, featuring JWT-based auth and SendGrid email integration.</description>
+  <build>
+    <sourceDirectory>src</sourceDirectory>
+    <resources>
+      <resource>
+        <directory>src</directory>
+        <excludes>
+          <exclude>**/*.java</exclude>
+        </excludes>
+      </resource>
+    </resources>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+        <configuration>
+          <release>22</release>
+        </configuration>
+      </plugin>
+      
+    <plugin>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>exec-maven-plugin</artifactId>
+      <version>3.1.0</version>
+      <configuration>
+        <mainClass>controller.ServerApp</mainClass>
+      </configuration>
+    </plugin>
+  </plugins>
+      </build>
+  
+  <dependencies>
+
+  <!-- MySQL Connector -->
+<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>8.0.30</version>
+</dependency>
+
+  <!-- org.json -->
+  <dependency>
+    <groupId>org.json</groupId>
+    <artifactId>json</artifactId>
+    <version>20210307</version>
+  </dependency>
+
+  <!-- Jackson Core/Databind/Annotations -->
+  <dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+    <version>2.18.3</version>
+  </dependency>
+
+  <dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-core</artifactId>
+    <version>2.18.3</version>
+  </dependency>
+
+  <dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-annotations</artifactId>
+    <version>2.18.3</version>
+  </dependency>
+
+  <!-- SLF4J Logging -->
+  <dependency>
+    <groupId>org.slf4j</groupId>
+    <artifactId>slf4j-api</artifactId>
+    <version>1.7.25</version>
+  </dependency>
+
+  <!-- Apache HttpClient -->
+  <dependency>
+    <groupId>org.apache.httpcomponents</groupId>
+    <artifactId>httpclient</artifactId>
+    <version>4.5.13</version>
+  </dependency>
+
+  <dependency>
+    <groupId>org.apache.httpcomponents</groupId>
+    <artifactId>httpcore</artifactId>
+    <version>4.4.13</version>
+  </dependency>
+
+<!-- JWT Token dependency -->
+<dependency>
+  <groupId>io.jsonwebtoken</groupId>
+  <artifactId>jjwt-api</artifactId>
+  <version>0.11.5</version>
+</dependency>
+<dependency>
+  <groupId>io.jsonwebtoken</groupId>
+  <artifactId>jjwt-impl</artifactId>
+  <version>0.11.5</version>
+  <scope>runtime</scope>
+</dependency>
+<dependency>
+  <groupId>io.jsonwebtoken</groupId>
+  <artifactId>jjwt-jackson</artifactId> <!-- for JSON serialization -->
+  <version>0.11.5</version>
+  <scope>runtime</scope>
+</dependency>
+
+
+
+  <!-- SendGrid Java SDK -->
+<dependency>
+    <groupId>com.sendgrid</groupId>
+    <artifactId>sendgrid-java</artifactId>
+    <version>4.7.2</version>
+</dependency>
+
+  <!-- Java Dotenv -->
+  <dependency>
+    <groupId>io.github.cdimascio</groupId>
+    <artifactId>java-dotenv</artifactId>
+    <version>5.2.2</version>
+  </dependency>
+
+</dependencies>
+
+</project>
