@@ -20,16 +20,17 @@ public class SpendingDistributionHandler implements HttpHandler {
         }
 
         // ✅ Parse userId from query params
-        Map<String, String> queryParams = Utils.parseQueryParams(exchange.getRequestURI().getQuery());
-        int userId;
+//        Map<String, String> queryParams = Utils.parseQueryParams(exchange.getRequestURI().getQuery());
+//        int userId;
+//
+//        try {
+//            userId = Integer.parseInt(queryParams.getOrDefault("userId", "0").trim());
+//        } catch (NumberFormatException e) {
+//            Utils.sendResponse(exchange, 400, "Invalid or missing userId.");
+//            return;
+//        }
 
-        try {
-            userId = Integer.parseInt(queryParams.getOrDefault("userId", "0").trim());
-        } catch (NumberFormatException e) {
-            Utils.sendResponse(exchange, 400, "Invalid or missing userId.");
-            return;
-        }
-
+        int userId = (int) exchange.getAttribute("authUserId");
         // ✅ Call service
         AnalyticsResponse<SpendingDistribution> response = AnalyticsService.getSpendingDistribution(userId);
 

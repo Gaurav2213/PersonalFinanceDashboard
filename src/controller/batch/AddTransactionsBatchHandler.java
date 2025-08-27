@@ -25,8 +25,9 @@ public class AddTransactionsBatchHandler implements HttpHandler {
             List<Transaction> transactions = Utils.parseRequestBodyList(
                 exchange.getRequestBody(), new TypeReference<List<Transaction>>() {}
             );
-
-            ValidationResult result = TransactionService.addTransactionsBatch(transactions);
+            
+            int userId = (int) exchange.getAttribute("authUserId");
+            ValidationResult result = TransactionService.addTransactionsBatch(transactions ,  userId);
             Utils.sendResponse(exchange, result.isValid() ? 200 : 400, result.getMessage());
 
         } catch (com.fasterxml.jackson.databind.exc.InvalidFormatException e) {

@@ -32,7 +32,7 @@ public class JWTUtils {
     }
 
     public static String generateToken(int userId, String email) {
-        long expirationMs = 60 * 60 * 1000; // 1h
+        long expirationMs = 5*60 ; // 1h
         String jti = UUID.randomUUID().toString();
   
         return Jwts.builder()
@@ -53,7 +53,42 @@ public class JWTUtils {
             .getBody();
     }
 
+    //check the expiry of the token 
     public static boolean isExpired(Claims claims) {
         return claims.getExpiration() == null || claims.getExpiration().before(new Date());
+    }
+    
+    //reissue the new token 
+    public static String reissueIfValid(String token) {
+        Claims c = parseClaims(token); // throws if invalid/expired
+        int userId = Integer.parseInt(c.getSubject());
+        String email = c.get("email", String.class);
+        return generateToken(userId, email);
+    }
+    
+    //compute the time of an expiry
+    public static long secondsUntilExpiry(String token) {
+        Claims c = parseClaims(token);
+        long now = System.currentTimeMillis();
+        return Math.max(0, (c.getExpiration().getTime() - now) / 1000);
+    }
+
+    
+    //check the expiry of the token against threshold 
+    public static boolean isExpiringSoon(String token, long thresholdSeconds) {
+        return secondsUntilExpiry(token) <= thresholdSeconds;
+ 
+    }
+    
+    //get the token jti 
+    public static String getJti(String token) {
+        Claims c = parseClaims(token);     // throws if invalid/expired
+        return c.getId();                  // JJWT maps jti -> Claims.getId()
+    }
+
+    /** Returns the expiration time in each millis from a signed, unexpired JWT. */
+    public static long getExpirationMillis(String token) {
+        Claims c = parseClaims(token);     // throws if invalid/expired
+        return c.getExpiration().getTime();
     }
 }

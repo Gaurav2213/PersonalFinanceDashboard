@@ -31,25 +31,19 @@ public class GetTransactionsByCategoryHandler implements HttpHandler {
         }
 
         // Extract query params
-        String query = exchange.getRequestURI().getQuery();
-        int userId = -1;
-        String category = null;
+     // Extract authenticated userId from JWT (already set in exchange)
+        int userId = (int) exchange.getAttribute("authUserId");
 
-        if (query != null) {
-            String[] params = query.split("&");
-            for (String param : params) {
-                if (param.startsWith("userId=")) {
-                    try {
-                        userId = Integer.parseInt(param.split("=")[1]);
-                    } catch (NumberFormatException e) {
-                        userId = -1;
-                    }
-                } else if (param.startsWith("category=")) {
-                    category = param.split("=")[1];
-                }
-            }
+        
+     // Extract category from query param (only one expected)
+        String category = null;
+        String query = exchange.getRequestURI().getQuery();
+        if (query != null && query.startsWith("category=")) {
+            category = query.substring("category=".length());
         }
 
+ 
+      
         // Call service layer for validation and data
         TransactionResponse response = transactionService.getTransactionsByCategory(userId, category);
 

@@ -107,6 +107,15 @@ public class Utils {
         headers.add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         headers.add("Access-Control-Expose-Headers", "Content-Type");
       }
+    
+ // Utils.java
+    public static void sendNoContent(HttpExchange exchange) throws IOException {
+      addCorsHeaders(exchange.getResponseHeaders());
+      // Do NOT set Content-Type for 204
+      exchange.sendResponseHeaders(204, -1); // <- no response body
+      exchange.close(); // no body to write; just close
+    }
+
 
 
 }

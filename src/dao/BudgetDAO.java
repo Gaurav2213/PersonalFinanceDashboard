@@ -41,13 +41,13 @@ public class BudgetDAO {
 	
 	
 	//insert the budget in budget entity
-	public static boolean insertBudget(Budget budget) {
+	public static boolean insertBudget(Budget budget,int userId) {
 	    String sql = "INSERT INTO budgets (user_id, category, amount) VALUES (?, ?, ?)";
 
 	    try (Connection conn = DBConnection.getConnection();
 	         PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-	        stmt.setInt(1, budget.getUserId());
+	        stmt.setInt(1, userId);
 	        stmt.setString(2, budget.getCategory());
 	        stmt.setDouble(3, budget.getAmount());
 
@@ -159,7 +159,7 @@ public class BudgetDAO {
 	  //*********************************************************Batch Operations
 	  
 	  //batch operation for insertion 
-	  public static boolean insertMultipleBudgets(List<Budget> budgets) {
+	  public static boolean insertMultipleBudgets(List<Budget> budgets ,int userId) {
 		    String sql = "INSERT INTO budgets (user_id, category, amount) VALUES (?, ?, ?)";
 
 		    try (Connection conn = DBConnection.getConnection();
@@ -168,7 +168,7 @@ public class BudgetDAO {
 		        conn.setAutoCommit(false);
 
 		        for (Budget budget : budgets) {
-		            stmt.setInt(1, budget.getUserId());
+		            stmt.setInt(1,userId );
 		            stmt.setString(2, budget.getCategory().toLowerCase());
 		            stmt.setDouble(3, budget.getAmount());
 		            stmt.addBatch();
@@ -186,7 +186,7 @@ public class BudgetDAO {
 	  
 	  //batch operation for update 
 	  
-	  public static boolean updateBudgetsBatch(List<Budget> budgets) {
+	  public static boolean updateBudgetsBatch(List<Budget> budgets, int userId) {
 		    String sql = "UPDATE budgets SET amount = ? WHERE user_id = ? AND LOWER(category) = ?";
 
 		    try (Connection conn = DBConnection.getConnection();
@@ -196,7 +196,7 @@ public class BudgetDAO {
 
 		        for (Budget b : budgets) {
 		            stmt.setDouble(1, b.getAmount());
-		            stmt.setInt(2, b.getUserId());
+		            stmt.setInt(2, userId);
 		            stmt.setString(3, b.getCategory().toLowerCase());
 		            stmt.addBatch();
 		        }

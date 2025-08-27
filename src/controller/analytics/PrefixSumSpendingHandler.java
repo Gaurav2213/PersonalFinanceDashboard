@@ -24,15 +24,16 @@ public class PrefixSumSpendingHandler implements HttpHandler {
 
         Map<String, String> queryParams = Utils.parseQueryParams(exchange.getRequestURI().getQuery());
 
-        int userId;
+//        int userId;
         String type = queryParams.getOrDefault("type", "daily").trim().toLowerCase(); // default = daily
 
-        try {
-            userId = Integer.parseInt(queryParams.getOrDefault("userId", "0"));
-        } catch (NumberFormatException e) {
-            Utils.sendResponse(exchange, 400, "Invalid or missing userId");
-            return;
-        }
+//        try {
+//            userId = Integer.parseInt(queryParams.getOrDefault("userId", "0"));
+//        } catch (NumberFormatException e) {
+//            Utils.sendResponse(exchange, 400, "Invalid or missing userId");
+//            return;
+//        }
+        int userId = (int) exchange.getAttribute("authUserId");
 
         try {
         //  Call the service method

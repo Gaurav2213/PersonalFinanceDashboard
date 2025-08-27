@@ -267,12 +267,12 @@ public class TransactionService {
 	//batch operations ***************************************
 	
 
-	public static ValidationResult addTransactionsBatch(List<Transaction> transactions) {
+	public static ValidationResult addTransactionsBatch(List<Transaction> transactions , int userId) {
 		ValidationResult batchSizeResult = Utils.validateTransactionBatchSize(transactions);
 		if (!batchSizeResult.isValid()) return batchSizeResult;
 
 
-	    int userId = transactions.get(0).getUserId();  // assumes all transactions belong to the same user
+	   // int userId = transactions.get(0).getUserId();  // assumes all transactions belong to the same user
 
 	    // 🔄 Load existing transactions for that user
 	    List<Transaction> existing = TransactionDAO.getTransactionsByUserId(userId);
@@ -305,13 +305,13 @@ public class TransactionService {
 
 
 	    // 🔧 Proceed with batch insert
-	    boolean success = TransactionDAO.addTransactionsBatch(transactions);
+	    boolean success = TransactionDAO.addTransactionsBatch(transactions ,userId);
 	    return success
 	            ? new ValidationResult(true, "All transactions added successfully.")
 	            : new ValidationResult(false, "Failed to add transactions.");
 	}
 	
-	public static ValidationResult updateTransactionsBatch(List<Transaction> transactions) {
+	public static ValidationResult updateTransactionsBatch(List<Transaction> transactions , int userId) {
 	    // ✅ Batch size + null/empty list validation
 	    ValidationResult batchSizeResult = Utils.validateTransactionBatchSize(transactions);
 	    if (!batchSizeResult.isValid()) return batchSizeResult;
@@ -320,7 +320,7 @@ public class TransactionService {
 	    Set<String> batchSignatures = new HashSet<>();
 
 	    // 🧠 Assume all transactions belong to the same user (like your add logic)
-	    int userId = transactions.get(0).getUserId();
+	
 	    List<Transaction> existing = TransactionDAO.getTransactionsByUserId(userId);
 
 	    // ✅ Build signature set from existing DB records (excluding current update targets)
@@ -370,7 +370,7 @@ public class TransactionService {
 	        return new ValidationResult(false, String.join("\n", errorMessages));
 	    }
 
-	    boolean success = TransactionDAO.updateTransactionsBatch(transactions);
+	    boolean success = TransactionDAO.updateTransactionsBatch(transactions , userId);
 	    return success
 	            ? new ValidationResult(true, "All transactions updated successfully.")
 	            : new ValidationResult(false, "Failed to update transactions.");

@@ -18,14 +18,15 @@ public class MaxMinSpendingDaysHandler implements HttpHandler {
             return;
         }
 
-        int userId;
-        try {
-            Map<String, String> queryParams = Utils.parseQueryParams(exchange.getRequestURI().getQuery());
-            userId = Integer.parseInt(queryParams.getOrDefault("userId", "0").trim());
-        } catch (Exception e) {
-            Utils.sendResponse(exchange, 400, "Invalid or missing userId");
-            return;
-        }
+//        int userId;
+//        try {
+//            Map<String, String> queryParams = Utils.parseQueryParams(exchange.getRequestURI().getQuery());
+//            userId = Integer.parseInt(queryParams.getOrDefault("userId", "0").trim());
+//        } catch (Exception e) {
+//            Utils.sendResponse(exchange, 400, "Invalid or missing userId");
+//            return;
+//        }
+        int userId = (int) exchange.getAttribute("authUserId");
 
         AnalyticsResponse<Map<String, DateCumulativeSpending>> response = AnalyticsService.getMaxMinSpendingDays(userId);
         Utils.sendJsonResponse(exchange, response, response.isSuccess() ? 200 : 404);

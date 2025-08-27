@@ -29,9 +29,9 @@ public class AddBudgetHandler implements HttpHandler {
             Utils.sendResponse(exchange, 400, "Invalid request body format");
             return;
         }
-
+        int userId = (int) exchange.getAttribute("authUserId");
         // ✅ Call service layer
-        BudgetResponse<Budget> response = BudgetService.addBudget(budget);
+        BudgetResponse<Budget> response = BudgetService.addBudget(budget, userId);
         System.out.println("Service response: success=" + response.isSuccess() + ", message=" + response.getMessage());
 
         // ✅ Send final response

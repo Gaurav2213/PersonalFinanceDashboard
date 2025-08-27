@@ -1,4 +1,4 @@
-package controller.batch;
+package controller.budget;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import model.Budget;
@@ -22,15 +22,16 @@ public class GetBudgetsByUserHandler implements HttpHandler {
         }
 
         // ✅ Parse query parameters
-        Map<String, String> queryParams = Utils.parseQueryParams(exchange.getRequestURI().getQuery());
-        int userId;
-        try {
-            userId = Integer.parseInt(queryParams.getOrDefault("userId", "0").trim());
-        } catch (NumberFormatException e) {
-            Utils.sendResponse(exchange, 400, "Invalid or missing userId");
-            return;
-        }
-
+//        Map<String, String> queryParams = Utils.parseQueryParams(exchange.getRequestURI().getQuery());
+//        int userId;
+//        try {
+//            userId = Integer.parseInt(queryParams.getOrDefault("userId", "0").trim());
+//        } catch (NumberFormatException e) {
+//            Utils.sendResponse(exchange, 400, "Invalid or missing userId");
+//            return;
+//        }
+        int userId = (int) exchange.getAttribute("authUserId");
+        
         // ✅ Call service
         BudgetResponse<List<Budget>> response = BudgetService.getBudgetsByUser(userId);
         System.out.println("Service result: success=" + response.isSuccess() + ", message=" + response.getMessage());

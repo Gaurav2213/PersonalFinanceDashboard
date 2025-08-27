@@ -24,15 +24,16 @@ public class RecurringTransactionHandler implements HttpHandler {
         }
 
         // ✅ Parse query parameters
-        Map<String, String> queryParams = Utils.parseQueryParams(exchange.getRequestURI().getQuery());
-
-        int userId;
-        try {
-            userId = Integer.parseInt(queryParams.getOrDefault("userId", "0").trim());
-        } catch (NumberFormatException e) {
-            Utils.sendResponse(exchange, 400, "Invalid or missing userId");
-            return;
-        }
+      //  Map<String, String> queryParams = Utils.parseQueryParams(exchange.getRequestURI().getQuery());
+//
+//        int userId;
+//        try {
+//            userId = Integer.parseInt(queryParams.getOrDefault("userId", "0").trim());
+//        } catch (NumberFormatException e) {
+//            Utils.sendResponse(exchange, 400, "Invalid or missing userId");
+//            return;
+//        }
+        int userId = (int) exchange.getAttribute("authUserId");
 
         // ✅ Call service
         AnalyticsResponse<List<RecurringTransaction>> response =

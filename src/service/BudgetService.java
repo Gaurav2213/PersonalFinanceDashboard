@@ -19,13 +19,13 @@ public class BudgetService {
      * @param skipDuplicateCheck if true, does NOT check for duplicate existing entry (used in update)
      */
 	
-	private static ValidationResult validateBudgetInput(Budget budget, boolean skipDuplicateCheck , boolean skipUserValidation) {
+	private static ValidationResult validateBudgetInput(Budget budget, boolean skipDuplicateCheck , boolean skipUserValidation, int userId) {
 	    if (budget == null) {
 	        return new ValidationResult(false, "Budget object cannot be null");
 	    }
 
 	    if (!skipUserValidation) {
-	        ValidationResult userValidation = TransactionService.validateUserId(budget.getUserId());
+	        ValidationResult userValidation = TransactionService.validateUserId(userId);
 	        if (!userValidation.isValid()) return userValidation;
 	    }
 	    
@@ -53,13 +53,13 @@ public class BudgetService {
 	 
 	 
 	 //add the budget object 
-	 public static BudgetResponse<Budget> addBudget(Budget budget) {
-		    ValidationResult validation = validateBudgetInput(budget, false,false); // false = add operation
+	 public static BudgetResponse<Budget> addBudget(Budget budget ,int userId) {
+		    ValidationResult validation = validateBudgetInput(budget, false,false,  userId); // false = add operation
 		    if (!validation.isValid()) {
 		        return new BudgetResponse<>(false, validation.getMessage());
 		    }
 
-		    boolean success = BudgetDAO.insertBudget(budget);
+		    boolean success = BudgetDAO.insertBudget(budget, userId);
 		    return success
 		        ? new BudgetResponse<>(true, "Budget added successfully",budget)
 		        : new BudgetResponse<>(false, "Failed to add budget",null);
@@ -67,15 +67,15 @@ public class BudgetService {
 	 
 	 
 	 //update the budget amount of existing budget
-	 public static BudgetResponse<String> updateBudget(Budget budget) {
+	 public static BudgetResponse<String> updateBudget(Budget budget , int userId) {
 		    // 1. Validate input fields + existence
-		    ValidationResult validation = validateBudgetInput(budget, true, true); // `true` = skip duplicate check
+		    ValidationResult validation = validateBudgetInput(budget, true, true, userId); // `true` = skip duplicate check
 		    if (!validation.isValid()) {
 		        return new BudgetResponse<>(false, validation.getMessage(), null);
 		    }
 
 		    // 2. Perform update in DB
-		    boolean updated = BudgetDAO.updateBudgetAmount(budget.getUserId(), budget.getCategory(), budget.getAmount());
+		    boolean updated = BudgetDAO.updateBudgetAmount(userId, budget.getCategory(), budget.getAmount());
 		    if (updated) {
 		        return new BudgetResponse<>(true, "Budget updated successfully", null);
 		    } else {
@@ -131,16 +131,16 @@ public class BudgetService {
 
 	 //***************************************** budget batch operations 
 
-	 public static BudgetResponse<List<Budget>> addBudgetsBatch(List<Budget> budgets) {
+	 public static BudgetResponse<List<Budget>> addBudgetsBatch(List<Budget> budgets,int userId) {
 		    if (budgets == null || budgets.isEmpty()) {
 		        return new BudgetResponse<>(false, "Budget list cannot be empty.", new ArrayList<>());
 		    }
 
-		    int userId = budgets.get(0).getUserId();
-		    ValidationResult userResult = TransactionService.validateUserId(userId);
-		    if (!userResult.isValid()) {
-		        return new BudgetResponse<>(false, userResult.getMessage(), new ArrayList<>());
-		    }
+//		    int userId = budgets.get(0).getUserId();
+//		    ValidationResult userResult = TransactionService.validateUserId(userId);
+//		    if (!userResult.isValid()) {
+//		        return new BudgetResponse<>(false, userResult.getMessage(), new ArrayList<>());
+//		    }
 
 		    List<String> errors = new ArrayList<>();
 		    Set<String> batchCategories = new HashSet<>();
@@ -149,7 +149,7 @@ public class BudgetService {
 		    for (int i = 0; i < budgets.size(); i++) {
 		        Budget b = budgets.get(i);
 
-		        ValidationResult result = validateBudgetInput(b, false , true);  // false = add mode
+		        ValidationResult result = validateBudgetInput(b, false , true, userId);  // false = add mode
 		        if (!result.isValid()) {
 		            errors.add("Budget " + (i + 1) + ": " + result.getMessage());
 		            continue;
@@ -168,23 +168,22 @@ public class BudgetService {
 		        return new BudgetResponse<>(false, String.join("\n", errors), new ArrayList<>());
 		    }
 
-		    boolean inserted = BudgetDAO.insertMultipleBudgets(budgets);
+		    boolean inserted = BudgetDAO.insertMultipleBudgets(budgets , userId);
 		    return inserted
 		        ? new BudgetResponse<>(true, "Budgets added successfully.", budgets)
 		        : new BudgetResponse<>(false, "Failed to add budgets.", new ArrayList<>());
 		}
 
 	 //validate id and duplicate  existing check and batch duplication check 
-	 public static BudgetResponse<List<Budget>> updateBudgetsBatch(List<Budget> budgets) {
+	 public static BudgetResponse<List<Budget>> updateBudgetsBatch(List<Budget> budgets , int userId) {
 		    if (budgets == null || budgets.isEmpty()) {
 		        return new BudgetResponse<>(false, "Budget list cannot be empty.", new ArrayList<>());
 		    }
 
-		    int userId = budgets.get(0).getUserId();
-		    ValidationResult userResult = TransactionService.validateUserId(userId);
-		    if (!userResult.isValid()) {
-		        return new BudgetResponse<>(false, userResult.getMessage(), new ArrayList<>());
-		    }
+//		    ValidationResult userResult = TransactionService.validateUserId(userId);
+//		    if (!userResult.isValid()) {
+//		        return new BudgetResponse<>(false, userResult.getMessage(), new ArrayList<>());
+//		    }
 
 		    List<String> errors = new ArrayList<>();
 		    Set<String> seenCategories = new HashSet<>();
@@ -193,7 +192,7 @@ public class BudgetService {
 		        Budget b = budgets.get(i);
 
 		        // Validate without checking for duplicates (since this is update)
-		        ValidationResult result = validateBudgetInput(b, true, true);  // true = skipDuplicateCheck
+		        ValidationResult result = validateBudgetInput(b, true, true , userId);  // true = skipDuplicateCheck
 		        if (!result.isValid()) {
 		            errors.add("Budget " + (i + 1) + ": " + result.getMessage());
 		            continue;
@@ -209,7 +208,7 @@ public class BudgetService {
 		        return new BudgetResponse<>(false, String.join("\n", errors), new ArrayList<>());
 		    }
 
-		    boolean updated = BudgetDAO.updateBudgetsBatch(budgets);
+		    boolean updated = BudgetDAO.updateBudgetsBatch(budgets , userId);
 		    return updated
 		        ? new BudgetResponse<>(true, "Budgets updated successfully.", budgets)
 		        : new BudgetResponse<>(false, "Failed to update budgets.", new ArrayList<>());

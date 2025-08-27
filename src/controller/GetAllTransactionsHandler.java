@@ -34,16 +34,8 @@ public class GetAllTransactionsHandler implements HttpHandler {
             return;
         }
 
-        // Parse query param: userId
-        String query = exchange.getRequestURI().getQuery();
-        int userId = -1;
-        if (query != null && query.contains("userId=")) {
-            try {
-                userId = Integer.parseInt(query.split("userId=")[1]);
-            } catch (NumberFormatException e) {
-                userId = -1;
-            }
-        }
+    
+        int userId = (int) exchange.getAttribute("authUserId");
 
       
 //fetching the transaction   

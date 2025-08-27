@@ -23,7 +23,8 @@ public class FilteredTransactionsHandler implements HttpHandler {
         Map<String, String> queryParams = Utils.parseQueryParams(exchange.getRequestURI().getQuery());
 
         try {
-            int userId = Integer.parseInt(queryParams.getOrDefault("userId", "0").trim());
+//            int userId = Integer.parseInt(queryParams.getOrDefault("userId", "0").trim());
+        	int userId = (int) exchange.getAttribute("authUserId");
 
             double minAmount = Double.parseDouble(queryParams.getOrDefault("min", "0").trim());
             double maxAmount = Double.parseDouble(queryParams.getOrDefault("max", String.valueOf(Double.MAX_VALUE)).trim());

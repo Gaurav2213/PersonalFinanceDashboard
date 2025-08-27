@@ -25,9 +25,10 @@ public class CategoryTrendHandler implements HttpHandler {
 
         try {
             // ✅ Parse query parameters
-            Map<String, String> queryParams = Utils.parseQueryParams(exchange.getRequestURI().getQuery());
-            int userId = Integer.parseInt(queryParams.getOrDefault("userId", "0").trim());
+//            Map<String, String> queryParams = Utils.parseQueryParams(exchange.getRequestURI().getQuery());
+//            int userId = Integer.parseInt(queryParams.getOrDefault("userId", "0").trim());
 
+        	int userId = (int) exchange.getAttribute("authUserId");
             // ✅ Call service
             AnalyticsResponse<List<CategoryTrend>> response =
                     AnalyticsService.getCategoryTrendOverTime(userId);

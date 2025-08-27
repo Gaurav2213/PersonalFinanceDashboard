@@ -22,15 +22,16 @@ public class SpendingSummaryHandler implements HttpHandler {
 
         Map<String, String> queryParams = Utils.parseQueryParams(exchange.getRequestURI().getQuery());
 
-        int userId;
+        //int userId;
         String type = queryParams.getOrDefault("type", "monthly"); // default to monthly if not passed
 
-        try {
-            userId = Integer.parseInt(queryParams.getOrDefault("userId", "0"));
-        } catch (NumberFormatException e) {
-            Utils.sendResponse(exchange, 400, "Invalid userId format.");
-            return;
-        }
+//        try {
+//            userId = Integer.parseInt(queryParams.getOrDefault("userId", "0"));
+//        } catch (NumberFormatException e) {
+//            Utils.sendResponse(exchange, 400, "Invalid userId format.");
+//            return;
+//        }
+        int userId = (int) exchange.getAttribute("authUserId");
 
         // 🎯 Call the service method
         AnalyticsResponse<List<TimePeriodSpending>> response =

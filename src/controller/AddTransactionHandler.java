@@ -45,7 +45,7 @@ public class AddTransactionHandler implements HttpHandler {
 
         // Parse input fields
         JSONObject requestJson = new JSONObject(jsonBuilder.toString());
-        int userId = requestJson.getInt("userId");
+        int userId = (int) exchange.getAttribute("authUserId");
         String type = requestJson.getString("type");
         double amount = requestJson.getDouble("amount");
         String category = requestJson.getString("category");

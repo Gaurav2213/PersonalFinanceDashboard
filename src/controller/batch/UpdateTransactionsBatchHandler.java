@@ -22,8 +22,8 @@ public class UpdateTransactionsBatchHandler implements HttpHandler {
             List<Transaction> transactions = Utils.parseRequestBodyList(
                 exchange.getRequestBody(), new TypeReference<List<Transaction>>() {}
             );
-
-            ValidationResult result = TransactionService.updateTransactionsBatch(transactions);
+            int userId = (int) exchange.getAttribute("authUserId");
+            ValidationResult result = TransactionService.updateTransactionsBatch(transactions,userId);
             Utils.sendResponse(exchange, result.isValid() ? 200 : 400, result.getMessage());
 
         } catch (Exception e) {

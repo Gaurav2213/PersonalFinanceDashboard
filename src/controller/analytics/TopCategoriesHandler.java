@@ -27,7 +27,8 @@ public class TopCategoriesHandler implements HttpHandler {
         int limit;
 
         try {
-            userId = Integer.parseInt(queryParams.getOrDefault("userId", "0"));
+         //   userId = Integer.parseInt(queryParams.getOrDefault("userId", "0"));
+        	 userId = (int) exchange.getAttribute("authUserId");
             limit = Integer.parseInt(queryParams.getOrDefault("limit", "5")); // default top 5
         } catch (NumberFormatException e) {
             Utils.sendResponse(exchange, 400, "Invalid query parameter format.");

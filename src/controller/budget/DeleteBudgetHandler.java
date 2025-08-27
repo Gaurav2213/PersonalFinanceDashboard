@@ -23,16 +23,17 @@ public class DeleteBudgetHandler implements HttpHandler {
         Map<String, String> queryParams = Utils.parseQueryParams(exchange.getRequestURI().getQuery());
         System.out.println("Query params: " + queryParams);
 
-        int userId;
+      //  int userId;
         String category = queryParams.getOrDefault("category", "").trim();
        
 
-        try {
-            userId = Integer.parseInt(queryParams.getOrDefault("userId", "0"));
-        } catch (NumberFormatException e) {
-            Utils.sendResponse(exchange, 400, "Invalid or missing userId");
-            return;
-        }
+//        try {
+//            userId = Integer.parseInt(queryParams.getOrDefault("userId", "0"));
+//        } catch (NumberFormatException e) {
+//            Utils.sendResponse(exchange, 400, "Invalid or missing userId");
+//            return;
+//        }
+        int userId = (int) exchange.getAttribute("authUserId");
 
         // ✅ Call service
         BudgetResponse<String> response = BudgetService.deleteBudget(userId, category);

@@ -24,9 +24,9 @@ public class DeleteBudgetsBatchHandler implements HttpHandler {
                 exchange.getRequestBody(),
                 BatchDeleteBudgetRequest.class
             );
-
+            int userId = (int) exchange.getAttribute("authUserId");
             BudgetResponse<?> response = BudgetService.deleteBudgetsBatch(
-                request.getUserId(),
+                userId,
                 request.getCategories()
             );
 

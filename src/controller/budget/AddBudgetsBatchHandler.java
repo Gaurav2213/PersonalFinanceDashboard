@@ -25,7 +25,8 @@ public class AddBudgetsBatchHandler implements HttpHandler {
                 new TypeReference<List<Budget>>() {}
             );
 
-            BudgetResponse<List<Budget>> response = BudgetService.addBudgetsBatch(budgets);
+            int userId = (int) exchange.getAttribute("authUserId");
+            BudgetResponse<List<Budget>> response = BudgetService.addBudgetsBatch(budgets, userId);
 
             Utils.sendJsonResponse(exchange, response, response.isSuccess() ? 200 : 400);
 

@@ -21,9 +21,10 @@ public class DeleteTransactionsBatchHandler implements HttpHandler {
         try {
             // ✅ Use reusable utility method to parse JSON request body
             BatchDeleteRequest request = Utils.parseRequestBody(exchange.getRequestBody(), BatchDeleteRequest.class);
-
+            int userId = (int) exchange.getAttribute("authUserId");
+            
             ValidationResult result = TransactionService.deleteTransactionsBatch(
-                request.getUserId(),
+            	 userId,
                 request.getTransactionIds()
             );
 

@@ -42,7 +42,7 @@ public class DeleteTransactionHandler implements HttpHandler {
 
         JSONObject requestJson = new JSONObject(jsonBuilder.toString());
         int transactionId = requestJson.getInt("transactionId");
-        int userId = requestJson.getInt("userId");
+        int userId = (int) exchange.getAttribute("authUserId");
 
         // Call service to delete
         TransactionResponse result = transactionService.deleteTransaction(transactionId, userId);

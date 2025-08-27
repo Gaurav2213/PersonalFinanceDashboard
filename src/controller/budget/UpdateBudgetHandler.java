@@ -23,11 +23,12 @@ public class UpdateBudgetHandler implements HttpHandler {
         }
 
         // Parse JSON input
+        int userId = (int) exchange.getAttribute("authUserId");
         Budget budget = Utils.parseRequestBody(exchange.getRequestBody(), Budget.class);
         System.out.println(" Parsed budget input: " + budget);
 
         // Call service
-        BudgetResponse<String> response = BudgetService.updateBudget(budget);
+        BudgetResponse<String> response = BudgetService.updateBudget(budget, userId);
         System.out.println("📊 Service result: " + response.getMessage());
 
         // Send appropriate response

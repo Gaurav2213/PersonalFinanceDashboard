@@ -42,7 +42,7 @@ public class UpdateTransactionHandler implements HttpHandler {
 
         // Extract and map fields from request
         int transactionId = requestJson.getInt("id");
-        int userId = requestJson.getInt("userId");
+        int userId = (int) exchange.getAttribute("authUserId");
         String type = requestJson.getString("type");
         double amount = requestJson.getDouble("amount");
         String category = requestJson.getString("category");

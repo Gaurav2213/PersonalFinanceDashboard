@@ -14,12 +14,12 @@ import controller.analytics.SpendingSummaryHandler;
 import controller.analytics.TopCategoriesHandler;
 import controller.batch.AddTransactionsBatchHandler;
 import controller.batch.DeleteTransactionsBatchHandler;
-import controller.batch.GetBudgetsByUserHandler;
 import controller.batch.UpdateTransactionsBatchHandler;
 import controller.budget.AddBudgetHandler;
 import controller.budget.AddBudgetsBatchHandler;
 import controller.budget.DeleteBudgetHandler;
 import controller.budget.DeleteBudgetsBatchHandler;
+import controller.budget.GetBudgetsByUserHandler;
 import controller.budget.GetBudgetsHandler;
 import controller.budget.UpdateBudgetHandler;
 import controller.budget.UpdateBudgetsBatchHandler;
@@ -47,6 +47,12 @@ public class ServerApp {
         server.createContext("/register", new RegisterHandler());
         server.createContext("/login", new LoginHandler());
         server.createContext("/verify-email", new VerifyEmailHandler());
+        //*****************users controller mapping (PRIVATE)
+        server.createContext("/logout",
+        	    Guarded.protect((exchange, claims) -> new LogoutHandler().handle(exchange)));
+        
+      //*****************users  token session extension Public 
+        server.createContext("/auth/refresh", new RefreshTokenHandler());
 
         //******************single operation mapping (PROTECTED)
         server.createContext("/transaction/add",

@@ -1,6 +1,5 @@
 // util/AuthGuard.java
 package util;
-
 import com.sun.net.httpserver.HttpExchange;
 import io.jsonwebtoken.Claims;
 import java.io.IOException;

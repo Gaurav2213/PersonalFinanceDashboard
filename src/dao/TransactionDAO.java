@@ -229,7 +229,7 @@ public class TransactionDAO {
     //batch operations ******************************************************************
     
     //add transactions in batch
-    public static boolean addTransactionsBatch(List<Transaction> transactions) {
+    public static boolean addTransactionsBatch(List<Transaction> transactions , int userId) {
         String sql = "INSERT INTO transactions (user_id, amount, category, type, date, description) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -237,7 +237,7 @@ public class TransactionDAO {
             conn.setAutoCommit(false);
 
             for (Transaction tx : transactions) {
-                stmt.setInt(1, tx.getUserId());
+                stmt.setInt(1, userId);
                 stmt.setDouble(2, tx.getAmount());
                 stmt.setString(3, tx.getCategory());
                 stmt.setString(4, tx.getType());
@@ -257,7 +257,7 @@ public class TransactionDAO {
     }
     
     //update the transaction in batch
-    public static boolean updateTransactionsBatch(List<Transaction> transactions) {
+    public static boolean updateTransactionsBatch(List<Transaction> transactions , int userId) {
         String sql = "UPDATE transactions SET amount = ?, category = ?, type = ?, date = ?, description = ? WHERE id = ? AND user_id = ?";
 
         try (Connection conn = DBConnection.getConnection();
@@ -272,7 +272,7 @@ public class TransactionDAO {
                 stmt.setDate(4, tx.getDate());
                 stmt.setString(5, tx.getDescription());
                 stmt.setInt(6, tx.getId());
-                stmt.setInt(7, tx.getUserId());
+                stmt.setInt(7, userId);
                 stmt.addBatch();
             }
 
