@@ -32,7 +32,8 @@ public class JWTUtils {
     }
 
     public static String generateToken(int userId, String email) {
-        long expirationMs = 5*60 ; // 1h
+    	// In milliseconds (for token lifetime)
+        long expirationMs = 30 * 60 * 1000; // 30mints
         String jti = UUID.randomUUID().toString();
   
         return Jwts.builder()

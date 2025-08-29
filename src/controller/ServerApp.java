@@ -46,13 +46,18 @@ public class ServerApp {
         //*****************users controller mapping (PUBLIC)
         server.createContext("/register", new RegisterHandler());
         server.createContext("/login", new LoginHandler());
+        
+        //************************* verification email (PUBLIC)
         server.createContext("/verify-email", new VerifyEmailHandler());
+        server.createContext("/auth/resend-verification", new ResendVerificationHandler());
+
         //*****************users controller mapping (PRIVATE)
         server.createContext("/logout",
         	    Guarded.protect((exchange, claims) -> new LogoutHandler().handle(exchange)));
         
       //*****************users  token session extension Public 
         server.createContext("/auth/refresh", new RefreshTokenHandler());
+        
 
         //******************single operation mapping (PROTECTED)
         server.createContext("/transaction/add",

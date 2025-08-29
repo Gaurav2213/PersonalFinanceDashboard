@@ -6,6 +6,8 @@ import util.DBConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 
 public class UserDAO {
 
@@ -166,6 +168,30 @@ public class UserDAO {
             return false;
         }
     }
+    public static boolean updateVerificationToken(int userId, String token, Timestamp expiresAt) {
+        String sql = "UPDATE users SET emailVerificationToken = ?, emailVerificationTokenExpires= ? WHERE id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, token);
+            stmt.setTimestamp(2, expiresAt);
+            stmt.setInt(3, userId);
+            return stmt.executeUpdate() == 1;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+ 
+    public static void setResetToken(int userId, String tokenHash, java.sql.Timestamp expiresAt) throws SQLException {
+        String sql = "UPDATE users SET resetToken=?, resetTokenExpires=? WHERE id=?";
+        try (var con = DBConnection.getConnection(); var ps = con.prepareStatement(sql)) {
+            ps.setString(1, tokenHash);
+            ps.setTimestamp(2, expiresAt);
+            ps.setInt(3, userId);
+            ps.executeUpdate();
+        }
+    }
+
 
 
 }
