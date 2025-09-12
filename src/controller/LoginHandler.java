@@ -28,6 +28,8 @@ public class LoginHandler implements HttpHandler {
             String email = body == null ? null : (String) body.get("email");
             String password = body == null ? null : (String) body.get("password");
 
+            
+          
             AuthResponse<LoginResponse> response = userService.loginUser(email, password);
             Utils.sendJsonResponse(exchange, response, response.isSuccess() ? 200 : 401);
 

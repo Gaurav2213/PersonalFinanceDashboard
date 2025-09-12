@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="true">
+  <!-- Show Logback internal status on console -->
+  <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener"/>
+
+  <!-- Properties from env -->
+  <property name="APP_NAME" value="${APP_NAME:-pfd-app}"/>
+  <property name="HOSTNAME" value="${HOSTNAME:-local-dev}"/>
+  <property name="HEC_URL"      value="${SPLUNK_HEC_URL}"/>
+  <property name="HEC_TOKEN"    value="${SPLUNK_HEC_TOKEN}"/>
+  <property name="HEC_INDEX"    value="${SPLUNK_INDEX}"/>
+  <property name="HEC_INSECURE" value="${SPLUNK_HEC_INSECURE}"/>
+
+
+  <!-- Console appender -->
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- Splunk HEC appender -->
+  <appender name="SPLUNK" class="com.splunk.logging.HttpEventCollectorLogbackAppender">
+    <url>${HEC_URL}</url>
+    <token>${HEC_TOKEN}</token>
+    <index>${HEC_INDEX}</index>
+    <sourcetype>${APP_NAME}</sourcetype>
+    <source>http:${APP_NAME}</source>
+    <host>${HOSTNAME}</host>
+    <disableCertificateValidation>${HEC_INSECURE}</disableCertificateValidation>
+
+    <batch_size_count>50</batch_size_count>
+    <batch_interval>2000</batch_interval>
+    <batch_size_bytes>65536</batch_size_bytes>
+    <send_mode>sequential</send_mode>
+
+    <layout class="ch.qos.logback.classic.PatternLayout">
+      <pattern>
+        {"ts":"%date{ISO8601}","level":"%level","logger":"%logger{36}","thread":"%thread","message":%replace(%msg){"\n","\\n"},
+         "action":"%X{action}","path":"%X{path}","method":"%X{method}","status":"%X{status}",
+         "latencyMs":"%X{latencyMs}","userId":"%X{userId}","traceId":"%X{traceId}","ip":"%X{ip}","ua":"%X{ua}"}
+      </pattern>
+    </layout>
+  </appender>
+
+  <!-- Capture errors from the Splunk appender and send them to console -->
+  <logger name="com.splunk.logging.HttpEventCollectorErrorHandler" level="DEBUG" additivity="false">
+    <appender-ref ref="CONSOLE"/>
+  </logger>
+
+  <appender name="ASYNC_SPLUNK" class="ch.qos.logback.classic.AsyncAppender">
+    <appender-ref ref="SPLUNK"/>
+    <queueSize>8192</queueSize>
+    <discardingThreshold>0</discardingThreshold>
+    <neverBlock>true</neverBlock>
+  </appender>
+
+  <!-- Extra debug -->
+  <logger name="com.splunk.logging" level="DEBUG"/>
+  <logger name="ch.qos.logback" level="DEBUG"/>
+
+  <logger name="env.check" level="INFO" additivity="false">
+    <appender-ref ref="CONSOLE"/>
+  </logger>
+
+  <root level="INFO">
+    <appender-ref ref="ASYNC_SPLUNK"/>
+    <appender-ref ref="CONSOLE"/>
+  </root>
+</configuration>

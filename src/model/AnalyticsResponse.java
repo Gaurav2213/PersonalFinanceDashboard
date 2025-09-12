@@ -14,6 +14,10 @@ public class AnalyticsResponse<T> {
 	        this.message = message;
 	        this.data = data;
 	    }
+	    //constructor without data initilization
+	    public AnalyticsResponse(boolean success, String message) {
+	        this(success, message, null);
+	    }
 
 
 		// Getters & Setters

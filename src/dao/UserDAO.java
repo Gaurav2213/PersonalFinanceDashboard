@@ -191,6 +191,46 @@ public class UserDAO {
             ps.executeUpdate();
         }
     }
+    
+    
+ // dao/UserDAO.java
+    public static Integer findUserIdByValidResetHash(String tokenHash) throws SQLException {
+        String sql = """
+            SELECT id
+            FROM users
+            WHERE resetToken = ? AND resetTokenExpires > NOW()
+            LIMIT 1
+        """;
+        try (var con = DBConnection.getConnection();
+             var ps = con.prepareStatement(sql)) {
+            ps.setString(1, tokenHash);
+            try (var rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("id");      // ✅ just the user id
+                }
+                return null;                     // no match / expired
+            }
+        }
+    }
+
+
+    public static void updatePassword(int userId, String passwordHash) throws SQLException {
+        String sql = "UPDATE users SET password = ? WHERE id = ?";
+        try (var con = DBConnection.getConnection(); var ps = con.prepareStatement(sql)) {
+            ps.setString(1, passwordHash);
+            ps.setInt(2, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    public static void clearResetToken(int userId) throws SQLException {
+        String sql = "UPDATE users SET resetToken = NULL, resetTokenExpires = NULL WHERE id = ?";
+        try (var con = DBConnection.getConnection(); var ps = con.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.executeUpdate();
+        }
+    }
+
 
 
 

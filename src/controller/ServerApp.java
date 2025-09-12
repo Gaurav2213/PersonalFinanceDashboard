@@ -33,31 +33,53 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import util.Guarded;
 
 public class ServerApp {
+	private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger("probe");
+
+
     public static void main(String[] args) throws IOException {
+    	log.info("splunk_probe");
+    	try {
+    	    Class.forName("io.jsonwebtoken.Claims");
+    	    System.out.println("✅ jjwt-api is on the runtime classpath!");
+    	} catch (ClassNotFoundException e) {
+    	    System.out.println("❌ jjwt-api NOT on the runtime classpath!");
+    	    e.printStackTrace();
+    	}
+    	System.out.println(System.getProperty("java.class.path"));
+
         // Create server on port 8000
-        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress(8085), 0);
 
         // Register test end point (PUBLIC)
         server.createContext("/test", new TestHandler());
 
         //*****************users controller mapping (PUBLIC)
-        server.createContext("/register", new RegisterHandler());
-        server.createContext("/login", new LoginHandler());
+        server.createContext("/login",            Guarded.open(ex -> new LoginHandler().handle(ex)));
+        server.createContext("/register",         Guarded.open(ex -> new RegisterHandler().handle(ex)));
         
         //************************* verification email (PUBLIC)
-        server.createContext("/verify-email", new VerifyEmailHandler());
-        server.createContext("/auth/resend-verification", new ResendVerificationHandler());
+        server.createContext("/verify-email",   Guarded.open(ex -> new VerifyEmailHandler().handle(ex)));
+        server.createContext("/auth/resend-verification",Guarded.open(ex ->  new ResendVerificationHandler().handle(ex)));
 
-        //*****************users controller mapping (PRIVATE)
+        
+      //*****************users  token session extension (PUBLIC)
+        server.createContext("/auth/refresh", Guarded.open(ex -> new RefreshTokenHandler().handle(ex)));
+        
+        //*****************users  forgot and reset password  (PUBLIC)
+        server.createContext("/auth/forgot-password",Guarded.open(ex -> new controller.ForgotPasswordHandler().handle(ex)));
+        server.createContext("/auth/reset-password", Guarded.open(ex -> new controller.ResetPasswordHandler().handle(ex)));
+ 
+        
+        
+        //*****************users controller mapping (PROTECTED)
         server.createContext("/logout",
         	    Guarded.protect((exchange, claims) -> new LogoutHandler().handle(exchange)));
-        
-      //*****************users  token session extension Public 
-        server.createContext("/auth/refresh", new RefreshTokenHandler());
-        
 
         //******************single operation mapping (PROTECTED)
         server.createContext("/transaction/add",

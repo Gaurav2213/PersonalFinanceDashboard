@@ -16,7 +16,7 @@ import util.TokenUtils;
 
 public class UserService {
 	
-
+	 
 	// Helper method to validate name
 	private ValidationResult validateName(String name) {
 	    if (name == null || name.trim().isEmpty()) {
@@ -29,7 +29,7 @@ public class UserService {
 	}
 
 	// Helper method to validate password
-	private ValidationResult validatePassword(String password) {
+	public static ValidationResult validatePassword(String password) {
 	    if (password == null || password.trim().isEmpty()) {
 	        return new ValidationResult(false, "Password cannot be empty");
 	    }
@@ -182,6 +182,8 @@ public class UserService {
 	        return new AuthResponse<>(false, "Invalid token");
 	    }
 	}
+	
+	  
 
 
 }
