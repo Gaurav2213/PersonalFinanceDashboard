@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return null;
   };
 
-  registerForm.addEventListener("submit", (e) => {
+  registerForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     clearMessage("registerMessage");
 
@@ -58,9 +58,47 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // ✅ Passed local validation
-    showMessage("registerMessage", "Validation passed ✅ Ready to register.", false);
+	/* Build payload EXACTLY as backend expects */
+	    const payload = {
+	      name: fullName,      
+	      email: email,
+	      password: password
+	    };
 
-    // Next step: call backend /auth/register with fetch()
-  });
+	    try {
+	      showMessage("registerMessage", "Creating account...", false);
+
+	      /* 6 Call backend */
+	      const response = await fetch(`${API_BASE_URL}/register`, {
+	        method: "POST",
+	        headers: { "Content-Type": "application/json" },
+	        body: JSON.stringify(payload)
+	      });
+
+	      /* Parse backend response */
+	      const data = await response.json();
+	      // data = { success: true/false, message: "..." }
+
+	      /* 8 Handle response */
+	      if (!data.success) {
+	        showMessage("registerMessage", data.message, true);
+	        return;
+	      }
+
+	      showMessage("registerMessage", data.message, false);
+
+	      /* 9 Redirect to login */
+	      setTimeout(() => {
+	        window.location.href = "login.html";
+	      }, 1200);
+
+	    } catch (error) {
+	      showMessage(
+	        "registerMessage",
+	        "Unable to connect to server. Please try again later.",
+	        true
+	      );
+	    }
+	  });
+ 
 });
