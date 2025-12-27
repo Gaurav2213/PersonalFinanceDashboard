@@ -102,15 +102,14 @@ public class Utils {
     }
     
     public static void addCorsHeaders(Headers headers) {
-        headers.add("Access-Control-Allow-Origin",  "*"); // TODO: restrict to your frontend domain in prod
-        headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization");
-        headers.add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        headers.add("Access-Control-Expose-Headers", "Content-Type");
+        headers.set("Access-Control-Allow-Origin",  "*"); // TODO: restrict to your frontend domain in prod
+        headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        headers.set("Access-Control-Expose-Headers", "Content-Type");
       }
     
  // Utils.java
     public static void sendNoContent(HttpExchange exchange) throws IOException {
-      addCorsHeaders(exchange.getResponseHeaders());
       // Do NOT set Content-Type for 204
       exchange.sendResponseHeaders(204, -1); // <- no response body
       exchange.close(); // no body to write; just close

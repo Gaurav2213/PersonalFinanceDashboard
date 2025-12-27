@@ -27,35 +27,66 @@
       <div class="auth-form">
         <h1 class="auth-title">Create Your Account</h1>
 
-        <form id="registerForm" novalidate>
+        <!-- ✅ Removed novalidate so HTML validation can work -->
+        <form id="registerForm">
           <div class="field">
             <label for="fullName">Full Name</label>
-            <input id="fullName" type="text" placeholder="Enter your full name" required minlength="3"
+            <input
+              id="fullName"
+              name="fullName"
+              type="text"
+              placeholder="Enter your full name"
+              required
+              minlength="3"
               maxlength="30"
               pattern="^[A-Za-z][A-Za-z\s]{1,58}$"
               title="Full name should be at least 3 characters, letters and spaces only."
-              
             />
+            <!-- ✅ Field-specific error placeholder -->
+            <small class="field-error" id="fullNameError" aria-live="polite"></small>
           </div>
 
           <div class="field">
             <label for="email">Email Address</label>
-            <input id="email" type="email" placeholder="Enter your email address" required maxlength="50"
-             />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="Enter your email address"
+              required
+              maxlength="50"
+            />
+            <small class="field-error" id="emailError" aria-live="polite"></small>
           </div>
 
           <div class="field">
             <label for="password">Password</label>
-            <input id="password" type="password" placeholder="Enter your password" required  minlength="8"
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Enter your password"
+              required
+              minlength="8"
               maxlength="15"
-              autocomplete="new-password" />
+              autocomplete="new-password"
+            />
+            <small class="field-error" id="passwordError" aria-live="polite"></small>
           </div>
 
           <div class="field">
             <label for="confirmPassword">Confirm Password</label>
-            <input id="confirmPassword" type="password" placeholder="Confirm your password" required  minlength="8"
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              placeholder="Confirm your password"
+              required
+              minlength="8"
               maxlength="15"
-              autocomplete="new-password"/>
+              autocomplete="new-password"
+            />
+            <small class="field-error" id="confirmPasswordError" aria-live="polite"></small>
           </div>
 
           <button type="submit" class="btn-primary">Create Account</button>
@@ -65,7 +96,8 @@
             <a href="login.html">Log In</a>
           </p>
 
-          <p id="registerMessage" class="auth-message"></p>
+          <!-- ✅ Global message ONLY for success / fallback / server errors -->
+          <p id="registerMessage" class="auth-message" aria-live="polite"></p>
         </form>
       </div>
     </div>

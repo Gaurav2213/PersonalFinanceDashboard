@@ -169,6 +169,10 @@ body.auth-body {
   border-radius: 24px;
   filter: drop-shadow(0 20px 40px rgba(15, 23, 42, 0.15));
 }
+/* field error and  border colour*/
+.field-error { display:block; margin-top:6px; font-size:12px; }
+.invalid { border: 1px solid #e53935; }
+
 
 
 /*
