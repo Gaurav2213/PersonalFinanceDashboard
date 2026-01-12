@@ -28,12 +28,32 @@
 
           <div class="field">
             <label for="email">Email Address</label>
-            <input id="email" type="email" placeholder="Enter your email address" required />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="Enter your email address"
+              required
+              maxlength="50"
+            />
+            <!-- ✅ field-specific error -->
+            <small class="field-error" id="emailError" aria-live="polite"></small>
           </div>
 
           <div class="field">
             <label for="password">Password</label>
-            <input id="password" type="password" placeholder="Enter your password" required />
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Enter your password"
+              required
+              minlength="8"
+              maxlength="15"
+              autocomplete="current-password"
+            />
+            <!-- ✅ field-specific error -->
+            <small class="field-error" id="passwordError" aria-live="polite"></small>
           </div>
 
           <button type="submit" class="btn-primary">Log In</button>
@@ -43,7 +63,8 @@
             <a href="register.html">Create Account</a>
           </p>
 
-          <p id="loginMessage" class="auth-message"></p>
+          <!-- ✅ global message for success / fallback only -->
+          <p id="loginMessage" class="auth-message" aria-live="polite"></p>
         </form>
       </div>
     </div>
