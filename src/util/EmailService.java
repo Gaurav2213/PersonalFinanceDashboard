@@ -11,7 +11,7 @@ public class EmailService {
 
 	private static final Dotenv dotenv = Dotenv.load();
 	private static final String SENDGRID_API_KEY = dotenv.get("SENDGRID_API_KEY");
-    private static final String FROM_EMAIL = "gauravsharma111199@gmail.com";
+    private static final String FROM_EMAIL = "gaurav928131@gmail.com";
     private static final String FROM_NAME = "Gaurav Sharma";
 
     public static boolean sendVerificationEmail(String toEmail, String toName, String verificationToken) {
@@ -19,7 +19,7 @@ public class EmailService {
     	System.out.println("SENDGRID API KEY (loaded): " + dotenv.get("SENDGRID_API_KEY"));
 
         String subject = "Verify your email – Personal Finance Dashboard";
-        String verificationUrl = "http://localhost:8000/verify-email?token=" + verificationToken;
+        String verificationUrl = "http://localhost:8085/verify-email?token=" + verificationToken;
 
         String content = String.format(
             "Hi %s,\n\nThank you for registering! Please verify your email by clicking the link below:\n\n%s\n\n" +

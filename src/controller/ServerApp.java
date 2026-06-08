@@ -53,7 +53,7 @@ public class ServerApp {
     	}
     	System.out.println(System.getProperty("java.class.path"));
 
-        // Create server on port 8000
+        // Create server on port 8085
         HttpServer server = HttpServer.create(new InetSocketAddress(8085), 0);
 
         // Register test end point (PUBLIC)

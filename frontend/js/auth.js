@@ -228,7 +228,7 @@ function initLogin() {
         if (token) localStorage.setItem("token", token);
       }
 
-      // ✅ Store token if your backend returns one (adjust field name if needed)
+      //  Store token if your backend returns one (adjust field name if needed)
       // Example patterns:
       // if (data.token) localStorage.setItem("token", data.token);
       // if (data.data?.token) localStorage.setItem("token", data.data.token);

@@ -13,7 +13,7 @@ import java.io.IOException;
 
 public class AuthGuard {
 	private static final int RESET_TTL_MINUTES = 20;
-    private static final String FRONTEND_BASE_URL = "http://localhost:3000";
+    private static final String FRONTEND_BASE_URL = "http://localhost:5500";
 
     public static String extractBearerToken(HttpExchange exchange) {
         String h = exchange.getRequestHeaders().getFirst("Authorization");

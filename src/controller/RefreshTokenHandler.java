@@ -39,7 +39,7 @@ public class RefreshTokenHandler implements HttpHandler {
             System.out.println("📌 Extracted JTI: " + jti);
 
             if (SessionManager.isBlacklisted(jti)) {
-                System.out.println("⛔ Token is blacklisted");
+                System.out.println(" Token is blacklisted");
                 Utils.sendResponse(ex, 401, "Token revoked");
                 return;
             }
@@ -78,8 +78,8 @@ public class RefreshTokenHandler implements HttpHandler {
             Utils.sendJsonResponse(ex, body, 200);
 
         } catch (Exception e) {
-            System.out.println("❌ Exception during token refresh");
-            e.printStackTrace();  // ✅ Full stacktrace
+            System.out.println(" Exception during token refresh");
+            e.printStackTrace();  //  Full stacktrace
             Utils.sendResponse(ex, 401, "Invalid token");
         }
     }

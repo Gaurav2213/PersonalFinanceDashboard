@@ -34,11 +34,11 @@ public class UserService {
 	        return new ValidationResult(false, "Password cannot be empty");
 	    }
 
-	    if (password.length() < 6) {
-	        return new ValidationResult(false, "Password must be at least 6 characters long");
+	    if (password.length() < 8) {
+	        return new ValidationResult(false, "Password must be at least 8 characters long");
 	    }
 
-	    if (!password.matches("^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*]).{6,}$")) {
+	    if (!password.matches("^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,}$")) {
 	        return new ValidationResult(false, "Password must contain uppercase, number, and special character");
 	    }
 
