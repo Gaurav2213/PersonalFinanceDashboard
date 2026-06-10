@@ -133,7 +133,7 @@ public class UserService {
 	        return new ValidationResult(false, "Registration failed. Please try again.");
 	    }
 	}
-	public AuthResponse<LoginResponse> loginUser(String email, String password) {
+	public AuthResponse<LoginResponse> loginWithValidation(String email, String password) {
 	    // Step 1: Validate inputs
 	    AuthResponse<User> validationResponse = validateLoginInputs(email, password);
 	    if (!validationResponse.isSuccess()) {

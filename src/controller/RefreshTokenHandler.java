@@ -2,85 +2,71 @@ package controller;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import io.jsonwebtoken.Claims;
+import model.AuthResponse;
+import model.LoginResponse;
 import util.AuthGuard;
 import util.JWTUtils;
 import util.SessionManager;
 import util.Utils;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 public class RefreshTokenHandler implements HttpHandler {
-	// In seconds (for refresh threshold check)
-    private static final long THRESHOLD_SECONDS =  5 * 60 ; // 5 minutes in second (⚠️ see note below)
+
+    // Only refresh tokens expiring within this window (5 minutes)
+    private static final long THRESHOLD_SECONDS = 5 * 60;
 
     @Override
     public void handle(HttpExchange ex) throws IOException {
-        System.out.println("🔁 RefreshTokenHandler invoked");
-
         if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
-            System.out.println("❌ Invalid method: " + ex.getRequestMethod());
             Utils.sendResponse(ex, 405, "Method Not Allowed");
             return;
         }
 
+        // Step 1: Extract Bearer token from Authorization header
         String token = AuthGuard.extractBearerToken(ex);
         if (token == null) {
-            System.out.println("❌ Missing bearer token");
-            Utils.sendResponse(ex, 401, "Missing bearer token");
+            Utils.sendJsonResponse(ex, new AuthResponse<>(false, "Missing Authorization header"), 401);
             return;
         }
 
         try {
-            System.out.println("🔐 Token received: " + token);
-
+            // Step 2: Extract JTI (unique token ID) and check if it has been blacklisted (logged out)
             String jti = JWTUtils.getJti(token);
-            System.out.println("📌 Extracted JTI: " + jti);
-
             if (SessionManager.isBlacklisted(jti)) {
-                System.out.println(" Token is blacklisted");
-                Utils.sendResponse(ex, 401, "Token revoked");
+                Utils.sendJsonResponse(ex, new AuthResponse<>(false, "Token has been revoked"), 401);
                 return;
             }
 
-            long secs = JWTUtils.secondsUntilExpiry(token);
-            System.out.println("⏱️ Seconds until expiry: " + secs);
-
-            if (secs == 0) {
-                System.out.println("⛔ Token already expired");
-                Utils.sendResponse(ex, 401, "Token expired");
+            // Step 3: Reject already-expired tokens — cannot refresh what is already dead
+            if (JWTUtils.secondsUntilExpiry(token) == 0) {
+                Utils.sendJsonResponse(ex, new AuthResponse<>(false, "Token has expired"), 401);
                 return;
             }
 
-            // Optional: only allow refresh near expiry
-            System.out.println("⚙️ Checking expiring soon (threshold: " + THRESHOLD_SECONDS + "ms)");
+            // Step 4: Only allow refresh if token is expiring within the threshold window
             if (!JWTUtils.isExpiringSoon(token, THRESHOLD_SECONDS)) {
-                System.out.println("⛔ Token not expiring soon");
-                Utils.sendResponse(ex, 400, "Token not eligible for refresh yet");
+                Utils.sendJsonResponse(ex, new AuthResponse<>(false, "Token not eligible for refresh yet"), 400);
                 return;
             }
 
-            System.out.println("🔁 Reissuing new token...");
+            // Step 5: Issue a new token, then blacklist the old one so it cannot be reused
             String newToken = JWTUtils.reissueIfValid(token);
-            long newSecs = JWTUtils.secondsUntilExpiry(newToken);
+            SessionManager.blacklist(jti, JWTUtils.getExpirationMillis(token));
 
-            long oldExp = JWTUtils.getExpirationMillis(token);
-            System.out.println("🛡️ Blacklisting old token (JTI: " + jti + ") until: " + oldExp);
-            SessionManager.blacklist(jti, oldExp);
+            // Step 6: Parse claims from new token to build the response (sub = userId, email claim)
+            Claims claims = JWTUtils.parseClaims(newToken);
+            int userId = Integer.parseInt(claims.getSubject());
+            String email = claims.get("email", String.class);
 
-            Map<String, Object> body = new HashMap<>();
-            body.put("success", true);
-            body.put("token", newToken);
-            body.put("expiresInSeconds", newSecs);
-
-            System.out.println("✅ Refresh successful: " + body);
-            Utils.sendJsonResponse(ex, body, 200);
+            // Step 7: Return new token wrapped in AuthResponse — frontend replaces old token in localStorage
+            LoginResponse loginResponse = new LoginResponse(userId, email, newToken);
+            Utils.sendJsonResponse(ex, new AuthResponse<>(true, "Token refreshed", loginResponse), 200);
 
         } catch (Exception e) {
-            System.out.println(" Exception during token refresh");
-            e.printStackTrace();  //  Full stacktrace
-            Utils.sendResponse(ex, 401, "Invalid token");
+            e.printStackTrace();
+            Utils.sendJsonResponse(ex, new AuthResponse<>(false, "Invalid token"), 401);
         }
     }
 }

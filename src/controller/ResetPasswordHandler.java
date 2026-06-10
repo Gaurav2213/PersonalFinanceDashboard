@@ -1,9 +1,8 @@
-// controller/auth/ResetPasswordHandler.java
 package controller;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import model.AnalyticsResponse;
+import model.AuthResponse;
 import org.json.JSONObject;
 import util.AuthGuard;
 import util.Utils;
@@ -12,6 +11,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 public class ResetPasswordHandler implements HttpHandler {
+
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -30,11 +30,11 @@ public class ResetPasswordHandler implements HttpHandler {
         }
 
         if (token.isEmpty() || newPassword.isEmpty()) {
-            Utils.sendResponse(exchange, 400, "Token and newPassword are required.");
+            Utils.sendJsonResponse(exchange, new AuthResponse<>(false, "Token and newPassword are required."), 400);
             return;
         }
 
-        AnalyticsResponse<Void> res = AuthGuard.resetPassword(token, newPassword);
+        AuthResponse<Void> res = AuthGuard.resetPassword(token, newPassword);
         Utils.sendJsonResponse(exchange, res, res.isSuccess() ? 200 : 400);
     }
 }

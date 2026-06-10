@@ -19,13 +19,8 @@ public class LogoutHandler implements HttpHandler {
             return;
         }
 
+        // Guarded.protect() already verified token is valid — safe to extract directly
         String token = AuthGuard.extractBearerToken(exchange);
-        if (token == null) {
-            Utils.sendResponse(exchange, 401,
-                "{\"success\":false,\"message\":\"Missing Authorization header\",\"data\":null}");
-            return;
-        }
-
         AuthResponse<Object> resp = userService.logout(token);
         Utils.sendJsonResponse(exchange, resp, resp.isSuccess() ? 200 : 401);
     }

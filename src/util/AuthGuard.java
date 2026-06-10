@@ -4,7 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import dao.UserDAO;
 import io.jsonwebtoken.Claims;
-import model.AnalyticsResponse;
+import model.AuthResponse;
 import model.User;
 import model.ValidationResult;
 import service.UserService;
@@ -70,7 +70,7 @@ public class AuthGuard {
         }
     }
     
-    public static AnalyticsResponse<Void> resetPassword(String rawToken, String newPassword) {
+    public static AuthResponse<Void> resetPassword(String rawToken, String newPassword) {
         if (rawToken == null || rawToken.isBlank()) {
             return new AnalyticsResponse<>(false, "token is required");
         }

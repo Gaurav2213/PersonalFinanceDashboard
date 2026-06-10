@@ -30,7 +30,7 @@ public class LoginHandler implements HttpHandler {
 
             
           
-            AuthResponse<LoginResponse> response = userService.loginUser(email, password);
+            AuthResponse<LoginResponse> response = userService.loginWithValidation(email, password);
             Utils.sendJsonResponse(exchange, response, response.isSuccess() ? 200 : 401);
 
         } catch (Exception e) {
