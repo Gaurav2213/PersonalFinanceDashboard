@@ -186,6 +186,41 @@ input.invalid {
 
 
 
+/* Ghost button — transparent default, grey on hover */
+.btn-ghost {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 13px 18px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-main);
+  text-align: center;
+  text-decoration: none;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-ghost:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Forgot Password + Create Account side by side */
+.auth-actions-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.auth-actions-row .btn-ghost {
+  flex: 1;
+  margin-top: 0;
+}
+
 /* Email verification success panel */
 .auth-verify-panel {
   text-align: center;

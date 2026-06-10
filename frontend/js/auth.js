@@ -229,9 +229,11 @@ function initLogin() {
 
     const payload = { email, password };
 
-    try {
-      showMessage("loginMessage", "Logging in...", false);
+    const submitBtn = loginForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Logging in...";
 
+    try {
       const response = await fetch(`${API_BASE_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -241,25 +243,23 @@ function initLogin() {
       const data = await response.json();
 
       if (!data.success) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Log In";
         const applied = applyBackendErrorToLoginField(data.message);
         if (!applied) showMessage("loginMessage", data.message || "Login failed.", true);
         return;
       }
-      else{
-        const token = data?.data?.token;
-        if (token) localStorage.setItem("token", token);
-      }
 
-
-
-      showMessage("loginMessage", data.message || "Login successful.", false);
+      const token = data?.data?.token;
+      if (token) localStorage.setItem("token", token);
 
       setTimeout(() => {
-        // update this to your dashboard path
         window.location.href = "../pages/dashboard.html";
-      }, 800);
+      }, 1500);
 
     } catch (error) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Log In";
       showMessage("loginMessage", "Unable to connect to server. Please try again later.", true);
     }
   });

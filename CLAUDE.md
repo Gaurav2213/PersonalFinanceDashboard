@@ -96,7 +96,7 @@ model/             → POJOs / DTOs
 util/              → Cross-cutting concerns (Utils, JWTUtils, EmailService, CategoryValidator)
 
 frontend/          → Static HTML/CSS/JS (no build step)
-  auth/            → login.html, register.html
+  auth/            → login.html, register.html, forgot-password.html (pending)
   js/              → auth.js, utils.js, config.js
 ```
 
@@ -206,10 +206,17 @@ All in `AnalyticsService`, exposed via `controller/analytics/`. DSA concepts use
 ### Frontend (Partially Integrated)
 
 - Static HTML/CSS/JS in `frontend/` — no build step
-- Register page — client-side validation + backend integrated ✅
-  - Post-registration: form hides, `.auth-verify-panel` shown with 5s countdown → redirects to login ✅
-- Login page — JWT received, stored in `localStorage` ✅
-- Shared `auth.css` across login/register — includes `.auth-verify-panel` styles
+- **Register page** — client-side validation + backend integrated ✅
+  - Post-registration: form + h1 hide, `.auth-verify-panel` injected dynamically with 5s countdown → redirects to `login.html` ✅
+  - Verify panel uses `registerForm.parentElement.appendChild(verifyPanel)` — no HTML change needed
+- **Login page** — JWT received, stored in `localStorage` ✅
+  - `maxlength="128"` on password field ✅
+  - Button disable + "Logging in..." loading state during fetch ✅ (prevents double-submit)
+  - "Forgot Password?" + "Create Account" side-by-side ghost buttons (`.auth-actions-row`) ✅
+- **`auth.css`** — shared across all auth pages:
+  - `.btn-ghost` — transparent bg, blue border + blue text on hover ✅
+  - `.auth-actions-row` — flex row, gap 8px, margin-top 16px ✅
+  - `.auth-verify-panel` — fadeIn animation, verify icon, countdown redirect ✅
 - Chart.js integrated for spending visualizations
 - Budget, Analytics, Dashboard pages — partially implemented, integration in progress
 
@@ -218,13 +225,15 @@ All in `AnalyticsService`, exposed via `controller/analytics/`. DSA concepts use
 ## In Progress 🔄
 
 - **Frontend flaws — pending fix:**
-  - `maxlength="15"` on password fields in `login.html` and `register.html` — should be `128`
-  - No "Forgot Password" link on `login.html` — backend endpoint exists
-  - No submit button disable during fetch — double-submit risk on both forms
+  - ~~`maxlength="15"` on `login.html` password~~ ✅ fixed (128)
+  - `maxlength="15"` on `register.html` password + confirmPassword fields — should be `128`
+  - ~~No "Forgot Password" link on `login.html`~~ ✅ added (ghost button row)
+  - ~~No submit button disable on login form~~ ✅ fixed (button pattern)
+  - No submit button disable during fetch on **register form** — double-submit risk
   - `else{` missing space at `auth.js` line ~226 — style inconsistency
   - `pattern` vs `maxlength` mismatch on `fullName` in `register.html` (pattern allows 60, maxlength caps at 30)
+- **Forgot Password frontend** — backend done (`/auth/forgot-password`, `/auth/reset-password`); `forgot-password.html` page not created yet; `initForgotPassword()` not added to `auth.js`
 - **Frontend-Backend integration** — registration and login done; logout, refresh, Budget, Analytics, Dashboard pages need wiring
-- **Forgot Password frontend** — backend done, frontend form needs connecting
 - **Session token refresh on frontend** — backend `/auth/refresh` exists, frontend needs to call it before expiry using JWT `exp` claim (`JSON.parse(atob(token.split('.')[1])).exp * 1000`)
 
 ---

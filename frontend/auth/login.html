@@ -49,7 +49,7 @@
               placeholder="Enter your password"
               required
               minlength="8"
-              maxlength="15"
+              maxlength="128"
               autocomplete="current-password"
             />
             <!-- ✅ field-specific error -->
@@ -58,10 +58,10 @@
 
           <button type="submit" class="btn-primary">Log In</button>
 
-          <p class="auth-footer-text">
-            Don’t have an account?
-            <a href="register.html">Create Account</a>
-          </p>
+          <div class="auth-actions-row">
+            <a href="forgot-password.html" class="btn-ghost">Forgot Password?</a>
+            <a href="register.html" class="btn-ghost">Create Account</a>
+          </div>
 
           <!-- ✅ global message for success / fallback only -->
           <p id="loginMessage" class="auth-message" aria-live="polite"></p>

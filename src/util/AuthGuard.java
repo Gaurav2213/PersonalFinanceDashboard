@@ -72,12 +72,12 @@ public class AuthGuard {
     
     public static AuthResponse<Void> resetPassword(String rawToken, String newPassword) {
         if (rawToken == null || rawToken.isBlank()) {
-            return new AnalyticsResponse<>(false, "token is required");
+            return new AuthResponse<>(false, "token is required");
         }
 
         ValidationResult vr = UserService.validatePassword(newPassword);
         if (!vr.isValid()) {
-            return new AnalyticsResponse<>(false, vr.getMessage());
+            return new AuthResponse<>(false, vr.getMessage());
         }
 
         String tokenHash = TokenUtils.sha256Hex(rawToken);
@@ -85,7 +85,7 @@ public class AuthGuard {
         try {
             Integer userId = UserDAO.findUserIdByValidResetHash(tokenHash);
             if (userId == null) {
-                return new AnalyticsResponse<>(false, "Invalid or expired reset link");
+                return new AuthResponse<>(false, "Invalid or expired reset link");
             }
 
             String pwdHash = PasswordUtils.hashPassword(newPassword);
@@ -93,10 +93,10 @@ public class AuthGuard {
             UserDAO.clearResetToken(userId);
            
 
-            return new AnalyticsResponse<>(true,"Password has been reset successfully"); // success only
+            return new AuthResponse<>(true,"Password has been reset successfully"); // success only
         } catch (Exception e) {
             e.printStackTrace();
-            return new AnalyticsResponse<>(false, "Something went wrong. Please try again");
+            return new AuthResponse<>(false, "Something went wrong. Please try again");
         }
     }
 
