@@ -207,8 +207,9 @@ All in `AnalyticsService`, exposed via `controller/analytics/`. DSA concepts use
 
 - Static HTML/CSS/JS in `frontend/` — no build step
 - Register page — client-side validation + backend integrated ✅
+  - Post-registration: form hides, `.auth-verify-panel` shown with 5s countdown → redirects to login ✅
 - Login page — JWT received, stored in `localStorage` ✅
-- Shared `auth.css` across login/register
+- Shared `auth.css` across login/register — includes `.auth-verify-panel` styles
 - Chart.js integrated for spending visualizations
 - Budget, Analytics, Dashboard pages — partially implemented, integration in progress
 
@@ -216,9 +217,15 @@ All in `AnalyticsService`, exposed via `controller/analytics/`. DSA concepts use
 
 ## In Progress 🔄
 
-- **Frontend-Backend integration** — registration and login done; Budget, Analytics, Dashboard pages need wiring
+- **Frontend flaws — pending fix:**
+  - `maxlength="15"` on password fields in `login.html` and `register.html` — should be `128`
+  - No "Forgot Password" link on `login.html` — backend endpoint exists
+  - No submit button disable during fetch — double-submit risk on both forms
+  - `else{` missing space at `auth.js` line ~226 — style inconsistency
+  - `pattern` vs `maxlength` mismatch on `fullName` in `register.html` (pattern allows 60, maxlength caps at 30)
+- **Frontend-Backend integration** — registration and login done; logout, refresh, Budget, Analytics, Dashboard pages need wiring
 - **Forgot Password frontend** — backend done, frontend form needs connecting
-- **Session token refresh on frontend** — backend `/auth/refresh` exists, frontend needs to call it before expiry
+- **Session token refresh on frontend** — backend `/auth/refresh` exists, frontend needs to call it before expiry using JWT `exp` claim (`JSON.parse(atob(token.split('.')[1])).exp * 1000`)
 
 ---
 

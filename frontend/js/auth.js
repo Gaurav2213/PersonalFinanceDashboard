@@ -141,11 +141,33 @@ function initRegister() {
         return;
       }
 
-      showMessage("registerMessage", data.message || "Account created successfully.", false);
+      // Hide form (and page title) and show email verification panel
+      registerForm.style.display = "none";
+      const formTitle = registerForm.parentElement.querySelector("h1");
+      if (formTitle) formTitle.style.display = "none";
 
-      setTimeout(() => {
-        window.location.href = "login.html";
-      }, 1200);
+      const verifyPanel = document.createElement("div");
+      verifyPanel.className = "auth-verify-panel";
+      verifyPanel.innerHTML = `
+        <div class="verify-icon">&#9993;</div>
+        <h2>Check your inbox</h2>
+        <p>We sent a verification link to <strong>${email}</strong>.</p>
+        <p>Click the link to activate your account before logging in.</p>
+        <a href="login.html" class="btn-primary verify-login-btn">Go to Login</a>
+        <p class="verify-redirect">Redirecting in <span id="verifyCountdown">5</span>s&hellip;</p>
+      `;
+      registerForm.parentElement.appendChild(verifyPanel);
+
+      let secs = 5;
+      const tick = setInterval(() => {
+        secs--;
+        const el = document.getElementById("verifyCountdown");
+        if (el) el.textContent = secs;
+        if (secs <= 0) {
+          clearInterval(tick);
+          window.location.href = "login.html";
+        }
+      }, 1000);
 
     } catch (error) {
       showMessage("registerMessage", "Unable to connect to server. Please try again later.", true);
