@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   initRegister();
   initLogin();
+  initForgotPassword();
 });
 
 /* =========================
@@ -171,6 +172,83 @@ function initRegister() {
 
     } catch (error) {
       showMessage("registerMessage", "Unable to connect to server. Please try again later.", true);
+    }
+  });
+}
+
+/* =========================
+   FORGOT PASSWORD
+========================= */
+function initForgotPassword() {
+  const forgotForm = document.getElementById("forgotPasswordForm");
+  if (!forgotForm) return;
+
+  const emailEl = document.getElementById("email");
+  attachClearOnInput(["email"]);
+
+  forgotForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    clearMessage("forgotMessage");
+    clearAllFieldErrors(["email"]);
+
+    if (!forgotForm.checkValidity()) {
+      forgotForm.reportValidity();
+      return;
+    }
+
+    const email = emailEl.value.trim().toLowerCase();
+    emailEl.value = email;
+
+    if (!email) {
+      setFieldError("email", "Email address is required.");
+      emailEl.focus();
+      return;
+    }
+
+    const submitBtn = forgotForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Sending...";
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Send Reset Link";
+        setFieldError("email", data.message || "Something went wrong.");
+        emailEl.focus();
+        return;
+      }
+
+      // Hide form, h1, and subtitle — show check-inbox panel
+      forgotForm.style.display = "none";
+      const formTitle = forgotForm.parentElement.querySelector("h1");
+      if (formTitle) formTitle.style.display = "none";
+      const formSubtitle = forgotForm.parentElement.querySelector(".auth-subtitle");
+      if (formSubtitle) formSubtitle.style.display = "none";
+
+      const panel = document.createElement("div");
+      panel.className = "auth-verify-panel";
+      panel.innerHTML = `
+        <div class="verify-icon">&#128274;</div>
+        <h2>Check your inbox</h2>
+        <p>If an account exists for <strong>${email}</strong>, we've sent a password reset link.</p>
+        <p>Check your spam folder if you don't see it within a few minutes.</p>
+        <a href="login.html" class="btn-primary verify-login-btn">Back to Login</a>
+      `;
+      forgotForm.parentElement.appendChild(panel);
+
+    } catch (error) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Send Reset Link";
+      showMessage("forgotMessage", "Unable to connect to server. Please try again later.", true);
     }
   });
 }

@@ -75,9 +75,16 @@ body.auth-body {
 }
 
 .auth-title {
-  margin: 0 0 28px;
+  margin: 0 0 8px;
   font-size: 32px;
   font-weight: 700;
+}
+
+.auth-subtitle {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
 }
 
 .field {
