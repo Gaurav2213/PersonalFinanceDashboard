@@ -2,6 +2,7 @@
 .env
 /target/
 /bin/
+CLAUDE.md
 
 
 curl -k https://localhost:8088/services/collector \
