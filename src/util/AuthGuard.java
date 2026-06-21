@@ -58,12 +58,12 @@ public class AuthGuard {
 
             UserDAO.setResetToken(user.getId(), hash, exp);
 
-            String link = FRONTEND_BASE_URL + "/reset-password?token=" + raw;
+            String link = FRONTEND_BASE_URL + "/frontend/auth/reset-password.html?token=" + raw;
 
             // Dev-only: log token so you can test via Postman before UI is ready
             System.out.println("[DEV] Password reset link for " + email + ": " + link);
 
-            EmailService.sendVerificationEmail(user.getEmail(), user.getName(), link);
+            EmailService.sendPasswordResetEmail(user.getEmail(), user.getName(), link);
         } catch (Exception e) {
             // Log internally; never leak details to client
             e.printStackTrace();

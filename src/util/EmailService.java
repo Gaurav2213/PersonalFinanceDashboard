@@ -14,8 +14,37 @@ public class EmailService {
     private static final String FROM_EMAIL = "gaurav928131@gmail.com";
     private static final String FROM_NAME = "Gaurav Sharma";
 
+    public static boolean sendPasswordResetEmail(String toEmail, String toName, String resetLink) {
+        String subject = "Reset your password – Personal Finance Dashboard";
+        String content = String.format(
+            "Hi %s,\n\nWe received a request to reset your password. Click the link below to set a new password:\n\n%s\n\n" +
+            "This link expires in 20 minutes. If you didn't request this, you can ignore this email.\n\nThanks,\nGaurav Sharma",
+            toName, resetLink
+        );
+
+        Email from = new Email(FROM_EMAIL, FROM_NAME);
+        Email to = new Email(toEmail);
+        Content emailContent = new Content("text/plain", content);
+        Mail mail = new Mail(from, subject, to, emailContent);
+
+        SendGrid sg = new SendGrid(SENDGRID_API_KEY);
+        Request request = new Request();
+
+        try {
+            request.setMethod(com.sendgrid.Method.valueOf("POST"));
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
+            Response response = sg.api(request);
+            System.out.println("Password reset email sent. Status code: " + response.getStatusCode());
+            return response.getStatusCode() == 202;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public static boolean sendVerificationEmail(String toEmail, String toName, String verificationToken) {
-    	
+
     	System.out.println("SENDGRID API KEY (loaded): " + dotenv.get("SENDGRID_API_KEY"));
 
         String subject = "Verify your email – Personal Finance Dashboard";

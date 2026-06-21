@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initRegister();
   initLogin();
   initForgotPassword();
+  initResetPassword();
 });
 
 /* =========================
@@ -249,6 +250,134 @@ function initForgotPassword() {
       submitBtn.disabled = false;
       submitBtn.textContent = "Send Reset Link";
       showMessage("forgotMessage", "Unable to connect to server. Please try again later.", true);
+    }
+  });
+}
+
+/* =========================
+   RESET PASSWORD
+========================= */
+function initResetPassword() {
+  const resetForm = document.getElementById("resetPasswordForm");
+  if (!resetForm) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+
+  // No token in URL — show invalid-link state immediately, no form
+  if (!token) {
+    resetForm.style.display = "none";
+    const formTitle = resetForm.parentElement.querySelector("h1");
+    if (formTitle) formTitle.style.display = "none";
+    const formSubtitle = resetForm.parentElement.querySelector(".auth-subtitle");
+    if (formSubtitle) formSubtitle.style.display = "none";
+
+    const panel = document.createElement("div");
+    panel.className = "auth-verify-panel";
+    panel.innerHTML = `
+      <div class="verify-icon">&#10060;</div>
+      <h2>Invalid Reset Link</h2>
+      <p>This link is missing a reset token. Request a new one from the forgot password page.</p>
+      <a href="forgot-password.html" class="btn-primary verify-login-btn">Request New Link</a>
+    `;
+    resetForm.parentElement.appendChild(panel);
+    return;
+  }
+
+  const passwordEl = document.getElementById("password");
+  const confirmPasswordEl = document.getElementById("confirmPassword");
+  attachClearOnInput(["password", "confirmPassword"]);
+
+  const passwordStrengthError = (pwd) => {
+    const errors = [];
+    if (pwd.length < 8) errors.push("at least 8 characters");
+    if (!/[A-Z]/.test(pwd)) errors.push("1 uppercase letter");
+    if (!/[a-z]/.test(pwd)) errors.push("1 lowercase letter");
+    if (!/[0-9]/.test(pwd)) errors.push("1 number");
+    if (!/[!@#$%^&*()_\-+=\[\]{};:'\",.<>/?\\|`~]/.test(pwd)) errors.push("1 special character");
+    return errors.length ? `Password must include ${errors.join(", ")}.` : null;
+  };
+
+  resetForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearMessage("resetMessage");
+    clearAllFieldErrors(["password", "confirmPassword"]);
+
+    if (!resetForm.checkValidity()) {
+      resetForm.reportValidity();
+      return;
+    }
+
+    const newPassword = passwordEl.value;
+    const confirmPassword = confirmPasswordEl.value;
+
+    const pwdErr = passwordStrengthError(newPassword);
+    if (pwdErr) {
+      setFieldError("password", pwdErr);
+      passwordEl.focus();
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setFieldError("confirmPassword", "Passwords do not match.");
+      confirmPasswordEl.focus();
+      return;
+    }
+
+    const submitBtn = resetForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Resetting...";
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Reset Password";
+        // Expired or invalid token — show as general message, not field error
+        showMessage("resetMessage", data.message || "Reset failed. Request a new link.", true);
+        return;
+      }
+
+      // Success — hide form, show confirmation panel
+      resetForm.style.display = "none";
+      const formTitle = resetForm.parentElement.querySelector("h1");
+      if (formTitle) formTitle.style.display = "none";
+      const formSubtitle = resetForm.parentElement.querySelector(".auth-subtitle");
+      if (formSubtitle) formSubtitle.style.display = "none";
+
+      const panel = document.createElement("div");
+      panel.className = "auth-verify-panel";
+      panel.innerHTML = `
+        <div class="verify-icon">&#10003;</div>
+        <h2>Password Reset!</h2>
+        <p>Your password has been updated. You can now log in with your new password.</p>
+        <a href="login.html" class="btn-primary verify-login-btn">Go to Login</a>
+        <p class="verify-redirect">Redirecting in <span id="resetCountdown">3</span>s&hellip;</p>
+      `;
+      resetForm.parentElement.appendChild(panel);
+
+      let secs = 3;
+      const tick = setInterval(() => {
+        secs--;
+        const el = document.getElementById("resetCountdown");
+        if (el) el.textContent = secs;
+        if (secs <= 0) {
+          clearInterval(tick);
+          window.location.href = "login.html";
+        }
+      }, 1000);
+
+    } catch (error) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Reset Password";
+      showMessage("resetMessage", "Unable to connect to server. Please try again later.", true);
     }
   });
 }
